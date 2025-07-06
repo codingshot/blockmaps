@@ -23,8 +23,13 @@ const OpenStreetMap = ({ center, zoom = 13, markers = [], onMapClick }: OpenStre
   const [error, setError] = useState<string | null>(null);
   const markersRef = useRef<any[]>([]);
   const leafletRef = useRef<any>(null);
+  const initializationRef = useRef<boolean>(false);
 
   useEffect(() => {
+    // Prevent multiple initializations
+    if (initializationRef.current) return;
+    initializationRef.current = true;
+
     let mounted = true;
     let leafletMap: any = null;
 
@@ -33,42 +38,35 @@ const OpenStreetMap = ({ center, zoom = 13, markers = [], onMapClick }: OpenStre
         console.log('Starting map initialization...');
         console.log('Center coordinates:', center);
         
-        // Ensure container exists
-        const container = mapRef.current;
-        if (!container) {
-          console.error('Map container not found');
-          if (mounted) {
-            setError('Map container not available');
-            setIsLoading(false);
+        // Wait for container to be ready
+        let attempts = 0;
+        const maxAttempts = 10;
+        
+        while (attempts < maxAttempts) {
+          const container = mapRef.current;
+          if (container && container.offsetWidth > 0 && container.offsetHeight > 0) {
+            console.log('Container found and has dimensions:', {
+              width: container.offsetWidth,
+              height: container.offsetHeight
+            });
+            break;
           }
-          return;
+          
+          console.log(`Container not ready, attempt ${attempts + 1}/${maxAttempts}`);
+          await new Promise(resolve => setTimeout(resolve, 100));
+          attempts++;
         }
 
-        console.log('Container found, setting up dimensions...');
-        
-        // Ensure container has proper dimensions
-        container.style.width = '100%';
-        container.style.height = '100%';
-        container.style.minHeight = '400px';
-        container.style.position = 'relative';
-
-        // Wait a moment for container to be properly sized
-        await new Promise(resolve => setTimeout(resolve, 100));
-
-        console.log('Container dimensions after setup:', {
-          width: container.offsetWidth,
-          height: container.offsetHeight,
-          clientWidth: container.clientWidth,
-          clientHeight: container.clientHeight
-        });
+        const container = mapRef.current;
+        if (!container) {
+          throw new Error('Map container element not found');
+        }
 
         if (container.offsetWidth === 0 || container.offsetHeight === 0) {
-          console.warn('Container has zero dimensions, forcing size...');
+          console.log('Forcing container dimensions...');
           container.style.width = '100%';
           container.style.height = '400px';
           container.style.display = 'block';
-          
-          // Wait again after forcing dimensions
           await new Promise(resolve => setTimeout(resolve, 100));
         }
 
@@ -88,7 +86,7 @@ const OpenStreetMap = ({ center, zoom = 13, markers = [], onMapClick }: OpenStre
           return;
         }
 
-        console.log('Leaflet loaded, fixing marker icons...');
+        console.log('Fixing Leaflet icons...');
 
         // Fix default marker icons
         delete (L.Icon.Default.prototype as any)._getIconUrl;
@@ -106,7 +104,6 @@ const OpenStreetMap = ({ center, zoom = 13, markers = [], onMapClick }: OpenStre
           zoom: zoom,
           zoomControl: true,
           attributionControl: true,
-          preferCanvas: false
         });
 
         console.log('Map instance created, adding tile layer...');
@@ -129,7 +126,7 @@ const OpenStreetMap = ({ center, zoom = 13, markers = [], onMapClick }: OpenStre
           });
         }
 
-        // Wait for tiles to start loading
+        // Wait for tiles to load
         await new Promise(resolve => setTimeout(resolve, 500));
 
         if (mounted) {
@@ -142,18 +139,18 @@ const OpenStreetMap = ({ center, zoom = 13, markers = [], onMapClick }: OpenStre
       } catch (error) {
         console.error('Error initializing map:', error);
         if (mounted) {
-          setError(`Map initialization failed: ${error instanceof Error ? error.message : 'Unknown error'}`);
+          setError(`Failed to load map: ${error instanceof Error ? error.message : 'Unknown error'}`);
           setIsLoading(false);
         }
       }
     };
 
-    // Start initialization with a slight delay to ensure DOM is ready
-    const initTimer = setTimeout(initializeMap, 200);
+    // Start initialization with a delay to ensure DOM is ready
+    const timer = setTimeout(initializeMap, 100);
 
     return () => {
       mounted = false;
-      clearTimeout(initTimer);
+      clearTimeout(timer);
       if (leafletMap) {
         try {
           console.log('Cleaning up map instance...');
@@ -228,6 +225,7 @@ const OpenStreetMap = ({ center, zoom = 13, markers = [], onMapClick }: OpenStre
             onClick={() => {
               setError(null);
               setIsLoading(true);
+              initializationRef.current = false;
               window.location.reload();
             }} 
             className="px-4 py-2 bg-blue-500 text-white rounded hover:bg-blue-600 transition-colors"
@@ -260,8 +258,7 @@ const OpenStreetMap = ({ center, zoom = 13, markers = [], onMapClick }: OpenStre
           minHeight: '400px', 
           width: '100%', 
           height: '100%',
-          position: 'relative',
-          zIndex: 0
+          position: 'relative'
         }}
       />
     </div>
