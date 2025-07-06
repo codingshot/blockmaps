@@ -1,3 +1,4 @@
+
 import React, { useState, useEffect, useCallback } from 'react';
 import OpenStreetMap from '@/components/OpenStreetMap';
 import MapZoomControls from '@/components/MapZoomControls';
@@ -127,8 +128,8 @@ const CultureMap = ({ initialLocation, availableCities }: CultureMapProps) => {
         </Button>
       </div>
 
-      {/* City Info Panel - Top left */}
-      <div className="absolute top-4 left-4 z-40">
+      {/* City Info Panel - Top right */}
+      <div className="absolute top-4 right-4 z-40">
         <CityInfoPanel 
           city={{
             name: currentCity.name,
@@ -141,7 +142,7 @@ const CultureMap = ({ initialLocation, availableCities }: CultureMapProps) => {
       </div>
 
       {/* Map Controls Stack - Bottom left, aligned and flush */}
-      <div className="absolute bottom-4 left-4 z-40 flex flex-col space-y-2">
+      <div className="absolute bottom-4 left-4 z-40 flex flex-col space-y-0">
         <MapFilters 
           selectedFilters={selectedFilters}
           onFiltersChange={setSelectedFilters}
