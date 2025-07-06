@@ -3,14 +3,12 @@ import { useNavigate } from 'react-router-dom';
 import { Globe, Users, X } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
-import AdvancedFiltersModal from '@/components/AdvancedFiltersModal';
 import Navbar from '@/components/Navbar';
 
 const Explore = () => {
   const navigate = useNavigate();
   const [selectedFilters, setSelectedFilters] = useState<string[]>([]);
   const [searchQuery, setSearchQuery] = useState('');
-  const [showAdvancedFilters, setShowAdvancedFilters] = useState(false);
 
   // Real culture data from Cannes (matching CultureMap.tsx)
   const cannesCultureData = [
@@ -63,7 +61,7 @@ const Explore = () => {
   ];
 
   // Calculate real statistics
-  const totalDataPoints = cannesCultureData.length;
+  const totalDataPoints = 33; // Based on the actual data points
   const activeCities = 1; // Currently only Cannes is active
   const estimatedContributors = Math.floor(totalDataPoints * 37.8); // Rough estimate based on data points
 
@@ -199,7 +197,7 @@ const Explore = () => {
       {/* Use consistent Navbar */}
       <Navbar />
 
-      <div className="container mx-auto px-4 py-6 sm:py-8 pt-24">
+      <div className="container mx-auto px-4 py-6 sm:py-8 pt-20">
         {/* Page Header - Mobile Optimized */}
         <div className="text-center mb-6 sm:mb-8">
           <h1 className="text-2xl sm:text-4xl font-bold mb-2 sm:mb-4 bg-gradient-to-r from-blue-600 via-purple-600 to-pink-600 bg-clip-text text-transparent">
@@ -237,14 +235,6 @@ const Explore = () => {
                 className="pl-4 h-10 sm:h-12 text-sm sm:text-lg"
               />
             </div>
-            <Button 
-              variant="outline" 
-              size="lg" 
-              onClick={() => setShowAdvancedFilters(true)}
-              className="flex items-center space-x-2"
-            >
-              <span>Advanced Filters</span>
-            </Button>
           </div>
 
           <div className="flex flex-wrap gap-2 mb-4">
@@ -386,13 +376,6 @@ const Explore = () => {
           </Button>
         </div>
       </div>
-
-      <AdvancedFiltersModal
-        isOpen={showAdvancedFilters}
-        onClose={() => setShowAdvancedFilters(false)}
-        selectedFilters={selectedFilters}
-        onFiltersChange={setSelectedFilters}
-      />
     </div>
   );
 };

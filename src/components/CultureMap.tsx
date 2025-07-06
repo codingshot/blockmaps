@@ -2,6 +2,7 @@
 import React, { useState, useEffect, useCallback } from 'react';
 import OpenStreetMap from '@/components/OpenStreetMap';
 import MapZoomControls from '@/components/MapZoomControls';
+import MapFilters from '@/components/MapFilters';
 import { Input } from '@/components/ui/input';
 import { Search, Plus } from 'lucide-react';
 import CityInfoPanel from './CityInfoPanel';
@@ -25,6 +26,7 @@ const CultureMap = ({ initialLocation, availableCities }: CultureMapProps) => {
   const [cultureData, setCultureData] = useState<any[]>([]);
   const [visibleMarkers, setVisibleMarkers] = useState<any[]>([]);
   const [showAddPointForm, setShowAddPointForm] = useState(false);
+  const [selectedFilters, setSelectedFilters] = useState<string[]>([]);
 
   // Complete culture data for Cannes
   const cannesCultureData = [
@@ -86,6 +88,18 @@ const CultureMap = ({ initialLocation, availableCities }: CultureMapProps) => {
     setCultureData(cannesCultureData);
     setVisibleMarkers(cannesCultureData);
   }, []);
+
+  // Filter markers based on selected filters
+  useEffect(() => {
+    if (selectedFilters.length === 0) {
+      setVisibleMarkers(cultureData);
+    } else {
+      const filtered = cultureData.filter(marker => 
+        selectedFilters.includes(marker.type)
+      );
+      setVisibleMarkers(filtered);
+    }
+  }, [selectedFilters, cultureData]);
 
   const handleZoomIn = () => {
     setZoomLevel(prevZoom => Math.min(prevZoom + 1, 19));
@@ -153,6 +167,12 @@ const CultureMap = ({ initialLocation, availableCities }: CultureMapProps) => {
           }}
         />
       </div>
+
+      {/* Map Filters - Positioned in bottom-left */}
+      <MapFilters 
+        selectedFilters={selectedFilters}
+        onFiltersChange={setSelectedFilters}
+      />
 
       {/* OpenStreetMap Component */}
       <div className="absolute inset-0 z-10">
