@@ -106,19 +106,19 @@ const CultureMap = ({ initialLocation, availableCities }: CultureMapProps) => {
     );
   }
 
-  // Helper function to get user display info
+  // Helper function to get user display info with ninja emoji
   const getUserDisplayInfo = () => {
     if (!user) return { initial: '👤', display: 'Connected' };
     
     if (user.email) {
       const emailString = typeof user.email === 'string' ? user.email : user.email.address;
       return {
-        initial: emailString.charAt(0).toUpperCase(),
-        display: emailString
+        initial: '🥷',
+        display: emailString.split('@')[0]
       };
     }
     
-    return { initial: '👤', display: 'Connected' };
+    return { initial: '🥷', display: 'Ninja User' };
   };
 
   return (
@@ -213,7 +213,7 @@ const CultureMap = ({ initialLocation, availableCities }: CultureMapProps) => {
         </Button>
       </div>
 
-      {/* User Info - Mobile Responsive with Dashboard Access */}
+      {/* User Info - Mobile Responsive with Dashboard Access and Ninja Emoji */}
       {ready && authenticated && user && (
         <div className="absolute top-2 right-2 sm:top-6 sm:right-6 z-30">
           <Button
@@ -222,8 +222,8 @@ const CultureMap = ({ initialLocation, availableCities }: CultureMapProps) => {
             className="bg-white/90 backdrop-blur-sm rounded-full px-3 py-2 shadow-lg border border-white/20 hover:bg-white/95 hover:shadow-xl transition-all hover:scale-105"
           >
             <div className="flex items-center space-x-2">
-              <div className="w-6 h-6 sm:w-8 sm:h-8 bg-gradient-to-r from-blue-500 to-purple-600 rounded-full flex items-center justify-center">
-                <span className="text-xs sm:text-sm text-white font-bold">
+              <div className="w-6 h-6 sm:w-8 sm:h-8 bg-gradient-to-r from-purple-500 to-pink-600 rounded-full flex items-center justify-center">
+                <span className="text-sm sm:text-lg">
                   {getUserDisplayInfo().initial}
                 </span>
               </div>

@@ -9,7 +9,7 @@ import AuthModal from '@/components/AuthModal';
 
 const Index = () => {
   const navigate = useNavigate();
-  const { ready, authenticated } = usePrivy();
+  const { ready, authenticated, logout } = usePrivy();
   const [userLocation, setUserLocation] = useState<{lat: number, lng: number} | null>(null);
   const [isLoadingLocation, setIsLoadingLocation] = useState(true);
   const [showOnboarding, setShowOnboarding] = useState(false);
@@ -77,6 +77,14 @@ const Index = () => {
     navigate('/explore');
   };
 
+  const handleAuthAction = async () => {
+    if (authenticated) {
+      await logout();
+    } else {
+      setShowAuthModal(true);
+    }
+  };
+
   if (isLoadingLocation) {
     return (
       <div className="min-h-screen flex items-center justify-center bg-gradient-to-br from-blue-100 via-purple-50 to-pink-100">
@@ -138,6 +146,31 @@ const Index = () => {
             >
               <span>Explore</span>
             </Button>
+
+            {/* Auth Button */}
+            {ready && (
+              <Button
+                onClick={handleAuthAction}
+                variant={authenticated ? "ghost" : "default"}
+                size="sm"
+                className={`flex items-center space-x-2 transition-all duration-300 ${
+                  authenticated 
+                    ? "text-purple-600 hover:bg-purple-50" 
+                    : "bg-gradient-to-r from-blue-500 to-purple-600 hover:from-blue-600 hover:to-purple-700 text-white"
+                }`}
+              >
+                {authenticated ? (
+                  <>
+                    <span className="text-lg">🥷</span>
+                    <span className="hidden sm:inline">Logout</span>
+                  </>
+                ) : (
+                  <>
+                    <span>Connect</span>
+                  </>
+                )}
+              </Button>
+            )}
           </div>
         </div>
       </header>
@@ -184,14 +217,10 @@ const Index = () => {
           <div className="bg-white rounded-2xl p-6 sm:p-8 max-w-md w-full text-center shadow-2xl border border-gradient-to-br from-blue-200/50 via-purple-200/50 to-pink-200/50">
             <div className="mb-6">
               <div className="w-16 h-16 bg-gradient-to-br from-blue-500 via-purple-500 to-pink-500 rounded-full flex items-center justify-center mx-auto mb-4 shadow-lg">
-                <img 
-                  src="/lovable-uploads/c685a2ad-a3fd-49c6-9887-8b20a1c7f5ee.png" 
-                  alt="Blockmaps Logo" 
-                  className="w-12 h-12 object-contain"
-                />
+                <span className="text-2xl">🥷</span>
               </div>
-              <h2 className="text-xl sm:text-2xl font-bold mb-2 bg-gradient-to-r from-blue-600 via-purple-600 to-pink-600 bg-clip-text text-transparent">Welcome to Blockmaps</h2>
-              <p className="text-sm sm:text-base text-gray-600">Discover authentic neighborhood culture through community-mapped insights</p>
+              <h2 className="text-xl sm:text-2xl font-bold mb-2 bg-gradient-to-r from-blue-600 via-purple-600 to-pink-600 bg-clip-text text-transparent">Welcome, Ninja!</h2>
+              <p className="text-sm sm:text-base text-gray-600">You're now connected and ready to map culture in your neighborhood</p>
             </div>
             
             <div className="space-y-4">
@@ -199,14 +228,14 @@ const Index = () => {
                 className="w-full bg-gradient-to-r from-blue-500 via-purple-500 to-pink-500 hover:from-blue-600 hover:via-purple-600 hover:to-pink-600 text-white shadow-lg hover:shadow-xl transition-all duration-300"
                 onClick={() => setShowOnboarding(false)}
               >
-                Start Exploring
+                Start Mapping Culture
               </Button>
               <Button 
                 variant="outline" 
                 className="w-full border-2 border-gradient-to-r from-blue-400 to-purple-400 text-blue-600 hover:bg-gradient-to-r hover:from-blue-50 hover:to-purple-50 transition-all duration-300"
                 onClick={handleExploreClick}
               >
-                View All Cities
+                Explore All Cities
               </Button>
             </div>
           </div>
