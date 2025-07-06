@@ -93,8 +93,12 @@ const Index = () => {
       <header className="absolute top-0 left-0 right-0 z-50 bg-white/90 backdrop-blur-sm border-b border-white/20">
         <div className="container mx-auto px-4 py-3 flex items-center justify-between">
           <div className="flex items-center space-x-2">
-            <div className="w-8 h-8 bg-gradient-to-r from-blue-500 to-purple-600 rounded-lg flex items-center justify-center">
-              <MapPin className="w-5 h-5 text-white" />
+            <div className="w-8 h-8 flex items-center justify-center">
+              <img 
+                src="/lovable-uploads/c685a2ad-a3fd-49c6-9887-8b20a1c7f5ee.png" 
+                alt="Blockmaps Logo" 
+                className="w-8 h-8 object-contain"
+              />
             </div>
             <div>
               <h1 className="text-xl font-bold bg-gradient-to-r from-blue-600 to-purple-600 bg-clip-text text-transparent">
@@ -159,7 +163,11 @@ const Index = () => {
           <div className="bg-white rounded-2xl p-6 sm:p-8 max-w-md w-full text-center">
             <div className="mb-6">
               <div className="w-16 h-16 bg-gradient-to-r from-blue-500 to-purple-600 rounded-full flex items-center justify-center mx-auto mb-4">
-                <span className="text-2xl">🗺️</span>
+                <img 
+                  src="/lovable-uploads/c685a2ad-a3fd-49c6-9887-8b20a1c7f5ee.png" 
+                  alt="Blockmaps Logo" 
+                  className="w-12 h-12 object-contain"
+                />
               </div>
               <h2 className="text-xl sm:text-2xl font-bold mb-2">Welcome to Blockmaps</h2>
               <p className="text-sm sm:text-base text-gray-600">Discover authentic neighborhood culture through community-mapped insights</p>
