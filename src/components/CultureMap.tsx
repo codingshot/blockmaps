@@ -117,8 +117,8 @@ const CultureMap = ({ initialLocation, availableCities }: CultureMapProps) => {
 
   return (
     <div className="relative w-full h-full bg-gradient-to-br from-blue-50 to-purple-50">
-      {/* Add Point Button */}
-      <div className="absolute top-4 right-4 z-40">
+      {/* Add Point Button - Moved to bottom right */}
+      <div className="absolute bottom-4 right-4 z-40">
         <Button
           onClick={() => setShowAddPointForm(true)}
           className="bg-blue-600 hover:bg-blue-700 text-white rounded-full p-3"
@@ -146,8 +146,8 @@ const CultureMap = ({ initialLocation, availableCities }: CultureMapProps) => {
         onFiltersChange={setSelectedFilters}
       />
 
-      {/* Zoom Controls - Positioned underneath map filters in bottom-right */}
-      <div className="absolute bottom-4 right-4 z-40">
+      {/* Zoom Controls - Positioned underneath map filters in bottom-left */}
+      <div className="absolute bottom-4 left-4 z-30 mt-2" style={{ top: 'auto', marginTop: '350px' }}>
         <MapZoomControls onZoomIn={handleZoomIn} onZoomOut={handleZoomOut} />
       </div>
 
