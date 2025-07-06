@@ -1,4 +1,3 @@
-
 import React, { useState, useEffect, useCallback } from 'react';
 import OpenStreetMap from '@/components/OpenStreetMap';
 import MapZoomControls from '@/components/MapZoomControls';
@@ -141,17 +140,15 @@ const CultureMap = ({ initialLocation, availableCities }: CultureMapProps) => {
         />
       </div>
 
-      {/* Map Filters - Bottom left */}
-      <div className="absolute bottom-20 left-4 z-40">
+      {/* Map Controls Stack - Bottom left, aligned and flush */}
+      <div className="absolute bottom-4 left-4 z-40 flex flex-col space-y-2">
         <MapFilters 
           selectedFilters={selectedFilters}
           onFiltersChange={setSelectedFilters}
         />
-      </div>
-
-      {/* Zoom Controls - Positioned directly below filters with minimal spacing */}
-      <div className="absolute bottom-4 left-4 z-30">
-        <MapZoomControls onZoomIn={handleZoomIn} onZoomOut={handleZoomOut} />
+        <div className="z-30">
+          <MapZoomControls onZoomIn={handleZoomIn} onZoomOut={handleZoomOut} />
+        </div>
       </div>
 
       {/* OpenStreetMap Component */}
