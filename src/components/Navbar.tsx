@@ -2,14 +2,24 @@
 import { useNavigate, useLocation } from 'react-router-dom';
 import { usePrivy } from '@privy-io/react-auth';
 import { Button } from '@/components/ui/button';
+import { Search } from 'lucide-react';
 import { useState } from 'react';
 import AuthModal from './AuthModal';
+import MapSearch from './MapSearch';
+import {
+  Dialog,
+  DialogContent,
+  DialogHeader,
+  DialogTitle,
+  DialogTrigger,
+} from '@/components/ui/dialog';
 
 const Navbar = () => {
   const navigate = useNavigate();
   const location = useLocation();
   const { ready, authenticated, logout } = usePrivy();
   const [showAuthModal, setShowAuthModal] = useState(false);
+  const [showMobileSearch, setShowMobileSearch] = useState(false);
 
   const handleAuthAction = async () => {
     if (authenticated) {
@@ -18,6 +28,14 @@ const Navbar = () => {
       setShowAuthModal(true);
     }
   };
+
+  const handleLocationSelect = (lat: number, lng: number, name: string) => {
+    console.log('Location selected:', { lat, lng, name });
+    // You can add navigation logic here if needed
+    setShowMobileSearch(false);
+  };
+
+  const isMapPage = location.pathname === '/' || location.pathname.includes('/city/');
 
   return (
     <>
@@ -42,7 +60,35 @@ const Navbar = () => {
             </div>
           </div>
           
+          {/* Search Bar - Desktop only, only on map pages */}
+          {isMapPage && (
+            <div className="hidden md:flex flex-1 max-w-md mx-4">
+              <MapSearch onLocationSelect={handleLocationSelect} />
+            </div>
+          )}
+          
           <div className="flex items-center space-x-2">
+            {/* Mobile Search Button - only on map pages */}
+            {isMapPage && (
+              <Dialog open={showMobileSearch} onOpenChange={setShowMobileSearch}>
+                <DialogTrigger asChild>
+                  <Button 
+                    variant="outline" 
+                    size="sm"
+                    className="md:hidden flex items-center justify-center w-9 h-9 p-0 border-2 border-gradient-to-r from-blue-400 to-purple-400 hover:bg-gradient-to-r hover:from-blue-50 hover:to-purple-50"
+                  >
+                    <Search className="w-4 h-4 text-blue-600" />
+                  </Button>
+                </DialogTrigger>
+                <DialogContent className="sm:max-w-md">
+                  <DialogHeader>
+                    <DialogTitle>Search Location</DialogTitle>
+                  </DialogHeader>
+                  <MapSearch onLocationSelect={handleLocationSelect} />
+                </DialogContent>
+              </Dialog>
+            )}
+
             <Button 
               onClick={() => navigate('/explore')}
               variant="outline" 
