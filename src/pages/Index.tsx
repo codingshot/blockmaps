@@ -99,8 +99,8 @@ const Index = () => {
         />
       </div>
 
-      {/* Layer Toggle Panel - Repositioned to avoid overlap */}
-      <div className="absolute left-4 top-24 z-40">
+      {/* Layer Toggle Panel - Moved to bottom left */}
+      <div className="absolute left-4 bottom-4 z-40">
         <div className="bg-white/95 backdrop-blur-md rounded-xl p-3 shadow-xl border border-white/20">
           <div className="flex items-center space-x-2 mb-3">
             <Layers className="w-4 h-4 text-purple-600" />

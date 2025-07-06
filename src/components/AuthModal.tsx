@@ -14,7 +14,7 @@ const AuthModal = ({ isOpen, onClose }: AuthModalProps) => {
   const [isLoading, setIsLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
 
-  const handleLogin = async (method: 'wallet' | 'email') => {
+  const handleLogin = async () => {
     try {
       setIsLoading(true);
       setError(null);
@@ -63,7 +63,7 @@ const AuthModal = ({ isOpen, onClose }: AuthModalProps) => {
 
           <div className="space-y-3">
             <Button
-              onClick={() => handleLogin('wallet')}
+              onClick={handleLogin}
               disabled={isLoading}
               className="w-full h-12 bg-gradient-to-r from-blue-500 to-purple-600 hover:from-blue-600 hover:to-purple-700 disabled:opacity-50"
             >
@@ -72,7 +72,7 @@ const AuthModal = ({ isOpen, onClose }: AuthModalProps) => {
             </Button>
             
             <Button
-              onClick={() => handleLogin('email')}
+              onClick={handleLogin}
               disabled={isLoading}
               variant="outline"
               className="w-full h-12"
