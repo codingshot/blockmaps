@@ -21,14 +21,22 @@ const OpenStreetMap = ({ center, zoom = 13, markers = [], onMapClick }: OpenStre
   const [isLoading, setIsLoading] = useState(true);
   const [mapInstance, setMapInstance] = useState<any>(null);
   const [error, setError] = useState<string | null>(null);
+  const markersRef = useRef<any[]>([]);
 
   useEffect(() => {
     let mounted = true;
+    let leafletMap: any = null;
 
     const loadLeaflet = async () => {
       try {
         console.log('Loading Leaflet library...');
         
+        // Check if container exists
+        if (!mapRef.current) {
+          console.log('No map container found');
+          return;
+        }
+
         // Dynamically import Leaflet
         const leafletModule = await import('leaflet');
         const L = leafletModule.default;
@@ -36,12 +44,12 @@ const OpenStreetMap = ({ center, zoom = 13, markers = [], onMapClick }: OpenStre
         // Import CSS
         await import('leaflet/dist/leaflet.css');
 
-        if (!mounted || !mapRef.current) {
-          console.log('Component unmounted or no map container');
+        if (!mounted) {
+          console.log('Component unmounted during loading');
           return;
         }
 
-        console.log('Creating map instance...');
+        console.log('Creating map instance with center:', center);
 
         // Fix for default markers
         delete (L.Icon.Default.prototype as any)._getIconUrl;
@@ -51,75 +59,91 @@ const OpenStreetMap = ({ center, zoom = 13, markers = [], onMapClick }: OpenStre
           shadowUrl: 'https://cdnjs.cloudflare.com/ajax/libs/leaflet/1.9.4/images/marker-shadow.png',
         });
 
-        // Create map
-        const map = L.map(mapRef.current, {
-          center: [center.lat, center.lng],
-          zoom: zoom,
-          zoomControl: true,
-          attributionControl: true
-        });
-
-        console.log('Map created, adding tiles...');
-
-        // Add OpenStreetMap tiles
-        const tileLayer = L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
-          attribution: '© <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> contributors',
-          maxZoom: 19,
-          minZoom: 1,
-        });
-
-        tileLayer.addTo(map);
-
-        // Wait for tiles to load
-        tileLayer.on('load', () => {
-          console.log('Tiles loaded successfully');
-          if (mounted) {
-            setIsLoading(false);
-          }
-        });
-
-        // Handle tile load errors
-        tileLayer.on('tileerror', (e) => {
-          console.warn('Tile load error:', e);
-        });
-
-        // Handle map clicks
-        if (onMapClick) {
-          map.on('click', (e: any) => {
-            console.log('Map clicked at:', e.latlng.lat, e.latlng.lng);
-            onMapClick(e.latlng.lat, e.latlng.lng);
+        // Create map with retry logic
+        try {
+          leafletMap = L.map(mapRef.current, {
+            center: [center.lat, center.lng],
+            zoom: zoom,
+            zoomControl: true,
+            attributionControl: true,
+            preferCanvas: true
           });
-        }
 
-        // Set loading to false after a short delay to ensure map is rendered
-        setTimeout(() => {
+          console.log('Map instance created successfully');
+
+          // Add OpenStreetMap tiles with multiple fallback servers
+          const tileUrls = [
+            'https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png',
+            'https://tile.openstreetmap.org/{z}/{x}/{y}.png',
+            'https://{s}.tile.openstreetmap.fr/osmfr/{z}/{x}/{y}.png'
+          ];
+
+          let tileLayer;
+          for (const url of tileUrls) {
+            try {
+              tileLayer = L.tileLayer(url, {
+                attribution: '© <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> contributors',
+                maxZoom: 19,
+                minZoom: 1,
+                timeout: 10000
+              });
+              break;
+            } catch (tileError) {
+              console.warn('Failed to load tiles from:', url);
+            }
+          }
+
+          if (tileLayer) {
+            tileLayer.addTo(leafletMap);
+            
+            // Set loading to false after tiles start loading
+            setTimeout(() => {
+              if (mounted) {
+                console.log('Map loaded successfully');
+                setIsLoading(false);
+                setError(null);
+              }
+            }, 1500);
+          }
+
+          // Handle map clicks
+          if (onMapClick) {
+            leafletMap.on('click', (e: any) => {
+              console.log('Map clicked at:', e.latlng.lat, e.latlng.lng);
+              onMapClick(e.latlng.lat, e.latlng.lng);
+            });
+          }
+
           if (mounted) {
+            setMapInstance(leafletMap);
+          }
+
+        } catch (mapError) {
+          console.error('Error creating map:', mapError);
+          if (mounted) {
+            setError('Failed to initialize map');
             setIsLoading(false);
           }
-        }, 1000);
-
-        if (mounted) {
-          setMapInstance(map);
-          console.log('Map instance set');
         }
 
       } catch (error) {
-        console.error('Error loading map:', error);
+        console.error('Error loading Leaflet:', error);
         if (mounted) {
-          setError('Failed to load map');
+          setError('Failed to load map library');
           setIsLoading(false);
         }
       }
     };
 
-    loadLeaflet();
+    // Add a small delay to ensure DOM is ready
+    const timer = setTimeout(loadLeaflet, 100);
 
     return () => {
       mounted = false;
-      if (mapInstance) {
+      clearTimeout(timer);
+      if (leafletMap) {
         console.log('Cleaning up map instance');
-        mapInstance.remove();
-        setMapInstance(null);
+        leafletMap.remove();
       }
     };
   }, [center.lat, center.lng, zoom]);
@@ -130,12 +154,15 @@ const OpenStreetMap = ({ center, zoom = 13, markers = [], onMapClick }: OpenStre
 
     console.log('Updating markers:', markers.length);
 
-    // Clear existing markers
-    mapInstance.eachLayer((layer: any) => {
-      if (layer.options && layer.options.isCustomMarker) {
-        mapInstance.removeLayer(layer);
+    // Clear existing custom markers
+    markersRef.current.forEach(marker => {
+      try {
+        mapInstance.removeLayer(marker);
+      } catch (e) {
+        console.warn('Error removing marker:', e);
       }
     });
+    markersRef.current = [];
 
     // Add new markers
     markers.forEach((marker) => {
@@ -157,11 +184,11 @@ const OpenStreetMap = ({ center, zoom = 13, markers = [], onMapClick }: OpenStre
         });
 
         const markerInstance = L.marker([marker.lat, marker.lng], { 
-          icon: customIcon,
-          isCustomMarker: true 
+          icon: customIcon
         });
         
         markerInstance.addTo(mapInstance);
+        markersRef.current.push(markerInstance);
         
         markerInstance.bindPopup(`
           <div class="text-center p-2">
@@ -183,7 +210,13 @@ const OpenStreetMap = ({ center, zoom = 13, markers = [], onMapClick }: OpenStre
         <div className="text-center">
           <MapPin className="w-12 h-12 text-red-500 mx-auto mb-4" />
           <p className="text-red-600 font-semibold">Failed to load map</p>
-          <p className="text-gray-600 text-sm">Please check your internet connection</p>
+          <p className="text-gray-600 text-sm">{error}</p>
+          <button 
+            onClick={() => window.location.reload()} 
+            className="mt-2 px-4 py-2 bg-blue-500 text-white rounded hover:bg-blue-600"
+          >
+            Retry
+          </button>
         </div>
       </div>
     );
@@ -194,14 +227,7 @@ const OpenStreetMap = ({ center, zoom = 13, markers = [], onMapClick }: OpenStre
       <div className="w-full h-full flex items-center justify-center bg-gradient-to-br from-blue-50 to-purple-50">
         <div className="text-center">
           <div className="relative mb-4">
-            <div className="animate-spin rounded-full h-16 w-16 border-4 border-transparent border-t-blue-500 border-r-purple-500 border-b-pink-500 border-l-green-500 mx-auto"></div>
-            <div className="absolute inset-0 flex items-center justify-center">
-              <img 
-                src="/lovable-uploads/c685a2ad-a3fd-49c6-9887-8b20a1c7f5ee.png" 
-                alt="Loading" 
-                className="w-8 h-8 object-contain"
-              />
-            </div>
+            <Loader className="w-8 h-8 animate-spin text-blue-500 mx-auto" />
           </div>
           <p className="text-gray-600 font-medium">Loading map...</p>
         </div>

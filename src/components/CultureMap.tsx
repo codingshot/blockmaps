@@ -20,6 +20,10 @@ interface CultureMapProps {
 }
 
 const CultureMap = ({ initialLocation, availableCities }: CultureMapProps) => {
+  // Default to Cannes if no initial location
+  const defaultLocation = { lat: 43.5528, lng: 7.0174 };
+  const mapCenter = initialLocation || defaultLocation;
+
   const cannesCultureData = [
     { id: '1', emoji: '🎬', type: 'culture', lat: 43.5515, lng: 7.0173, label: 'Palais des Festivals' },
     { id: '2', emoji: '🍾', type: 'nightlife', lat: 43.5501, lng: 7.0167, label: 'La Croisette Bars' },
@@ -119,9 +123,9 @@ const CultureMap = ({ initialLocation, availableCities }: CultureMapProps) => {
 
   return (
     <div className="relative w-full h-full">
-      {/* OpenStreetMap */}
+      {/* OpenStreetMap - Always render with mapCenter */}
       <OpenStreetMap
-        center={initialLocation}
+        center={mapCenter}
         zoom={13}
         markers={filteredMarkers}
         onMapClick={handleMapClick}

@@ -2,6 +2,7 @@
 import { usePrivy } from '@privy-io/react-auth';
 import { X, Wallet, Mail } from 'lucide-react';
 import { Button } from '@/components/ui/button';
+import { useState } from 'react';
 
 interface AuthModalProps {
   isOpen: boolean;
@@ -10,13 +11,20 @@ interface AuthModalProps {
 
 const AuthModal = ({ isOpen, onClose }: AuthModalProps) => {
   const { login } = usePrivy();
+  const [isLoading, setIsLoading] = useState(false);
+  const [error, setError] = useState<string | null>(null);
 
   const handleLogin = async (method: 'wallet' | 'email') => {
     try {
+      setIsLoading(true);
+      setError(null);
       await login();
       onClose();
-    } catch (error) {
+    } catch (error: any) {
       console.error('Login failed:', error);
+      setError(error?.message || 'Authentication failed. Please try again.');
+    } finally {
+      setIsLoading(false);
     }
   };
 
@@ -47,22 +55,30 @@ const AuthModal = ({ isOpen, onClose }: AuthModalProps) => {
             </p>
           </div>
 
+          {error && (
+            <div className="bg-red-50 border border-red-200 rounded-lg p-3 text-sm text-red-600">
+              {error}
+            </div>
+          )}
+
           <div className="space-y-3">
             <Button
               onClick={() => handleLogin('wallet')}
-              className="w-full h-12 bg-gradient-to-r from-blue-500 to-purple-600 hover:from-blue-600 hover:to-purple-700"
+              disabled={isLoading}
+              className="w-full h-12 bg-gradient-to-r from-blue-500 to-purple-600 hover:from-blue-600 hover:to-purple-700 disabled:opacity-50"
             >
               <Wallet className="w-5 h-5 mr-2" />
-              Connect Wallet
+              {isLoading ? 'Connecting...' : 'Connect Wallet'}
             </Button>
             
             <Button
               onClick={() => handleLogin('email')}
+              disabled={isLoading}
               variant="outline"
               className="w-full h-12"
             >
               <Mail className="w-5 h-5 mr-2" />
-              Continue with Email
+              {isLoading ? 'Connecting...' : 'Continue with Email'}
             </Button>
           </div>
 
