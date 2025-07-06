@@ -199,7 +199,7 @@ const Explore = () => {
       {/* Use consistent Navbar */}
       <Navbar />
 
-      <div className="container mx-auto px-4 py-6 sm:py-8 pt-20">
+      <div className="container mx-auto px-4 py-6 sm:py-8 pt-24">
         {/* Page Header - Mobile Optimized */}
         <div className="text-center mb-6 sm:mb-8">
           <h1 className="text-2xl sm:text-4xl font-bold mb-2 sm:mb-4 bg-gradient-to-r from-blue-600 via-purple-600 to-pink-600 bg-clip-text text-transparent">
