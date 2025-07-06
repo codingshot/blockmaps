@@ -1,4 +1,3 @@
-
 import { useEffect, useRef, useState } from 'react';
 import { MapPin, Loader } from 'lucide-react';
 
@@ -84,8 +83,7 @@ const OpenStreetMap = ({ center, zoom = 13, markers = [], onMapClick }: OpenStre
               tileLayer = L.tileLayer(url, {
                 attribution: '© <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> contributors',
                 maxZoom: 19,
-                minZoom: 1,
-                timeout: 10000
+                minZoom: 1
               });
               break;
             } catch (tileError) {
