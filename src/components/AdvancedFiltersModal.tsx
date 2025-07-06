@@ -1,5 +1,5 @@
 
-import { X, Filter } from 'lucide-react';
+import { X } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 
 interface AdvancedFiltersModalProps {
@@ -12,42 +12,44 @@ interface AdvancedFiltersModalProps {
 const AdvancedFiltersModal = ({ isOpen, onClose, selectedFilters, onFiltersChange }: AdvancedFiltersModalProps) => {
   if (!isOpen) return null;
 
-  const filterCategories = [
-    {
-      title: 'City Status',
-      filters: [
-        { id: 'active', label: 'Live Maps Only', icon: '🟢' },
-        { id: 'coming-soon', label: 'Coming Soon', icon: '⏳' },
-      ]
-    },
-    {
-      title: 'Culture & Lifestyle',
-      filters: [
-        { id: 'luxury', label: 'Luxury Areas', icon: '💎' },
-        { id: 'nightlife', label: 'Nightlife Scene', icon: '🍸' },
-        { id: 'culture', label: 'Cultural Heritage', icon: '🎭' },
-        { id: 'art', label: 'Art & Design', icon: '🎨' },
-        { id: 'food', label: 'Food Scene', icon: '🍽️' },
-      ]
-    },
-    {
-      title: 'Safety & Environment',
-      filters: [
-        { id: 'safe', label: 'High Safety Rating', icon: '🛡️' },
-        { id: 'family-friendly', label: 'Family Friendly', icon: '👨‍👩‍👧' },
-        { id: 'walkable', label: 'Walkable Areas', icon: '🚶' },
-      ]
-    },
-    {
-      title: 'Geography & Climate',
-      filters: [
-        { id: 'beach', label: 'Beach Culture', icon: '🏖️' },
-        { id: 'mountain', label: 'Mountain Areas', icon: '🏔️' },
-        { id: 'urban', label: 'Urban Centers', icon: '🏙️' },
-        { id: 'historic', label: 'Historic Districts', icon: '🏛️' },
-      ]
-    },
+  const allFilters = [
+    // Safety & Security
+    { id: 'crime-rate', label: 'Crime Rate', emoji: '🔥', category: 'Safety' },
+    { id: 'gang-territory', label: 'Gang Territory', emoji: '🔫', category: 'Safety' },
+    { id: 'red-light', label: 'Red Light District', emoji: '💋', category: 'Safety' },
+    { id: 'safety', label: 'Safety Score', emoji: '🛡️', category: 'Safety' },
+    
+    // Lifestyle & Entertainment
+    { id: 'nightlife', label: 'Nightlife', emoji: '🍸', category: 'Lifestyle' },
+    { id: 'lgbtq', label: 'LGBTQ+ Friendly', emoji: '🏳️‍🌈', category: 'Lifestyle' },
+    { id: 'food', label: 'Food Scene', emoji: '🍽️', category: 'Lifestyle' },
+    { id: 'girls', label: 'Where Girls Are', emoji: '👯‍♀️', category: 'Lifestyle' },
+    
+    // Economic
+    { id: 'wealth', label: 'Wealth Distribution', emoji: '💰', category: 'Economic' },
+    { id: 'property-value', label: 'Property Values', emoji: '🏘️', category: 'Economic' },
+    { id: 'celebrity', label: 'Celebrity Hotspots', emoji: '⭐', category: 'Economic' },
+    
+    // Digital Nomad
+    { id: 'nomad', label: 'Nomad Clusters', emoji: '💻', category: 'Digital Nomad' },
+    { id: 'workspaces', label: 'Work-Friendly Cafes', emoji: '☕', category: 'Digital Nomad' },
+    { id: 'vegan', label: 'Vegan & Health Food', emoji: '🥗', category: 'Digital Nomad' },
+    
+    // Travel & Accessibility
+    { id: 'tourist-local', label: 'Tourist vs Local', emoji: '🧳', category: 'Travel' },
+    { id: 'authentic', label: 'Authentic Experience', emoji: '💎', category: 'Travel' },
+    { id: 'walkability', label: 'Walkability', emoji: '👣', category: 'Travel' },
+    { id: 'transit', label: 'Transit Access', emoji: '🚇', category: 'Travel' },
+    { id: 'parking', label: 'Parking Difficulty', emoji: '🅿️', category: 'Travel' },
+    
+    // Cultural
+    { id: 'street-art', label: 'Street Art', emoji: '🎨', category: 'Culture' },
+    { id: 'cultural-landmarks', label: 'Cultural Landmarks', emoji: '🏛️', category: 'Culture' },
+    { id: 'local-events', label: 'Local Events', emoji: '📅', category: 'Culture' },
+    { id: 'food-specialties', label: 'Food Specialties', emoji: '🍲', category: 'Culture' },
   ];
+
+  const categories = [...new Set(allFilters.map(f => f.category))];
 
   const toggleFilter = (filterId: string) => {
     const newFilters = selectedFilters.includes(filterId)
@@ -56,18 +58,18 @@ const AdvancedFiltersModal = ({ isOpen, onClose, selectedFilters, onFiltersChang
     onFiltersChange(newFilters);
   };
 
-  const clearAllFilters = () => {
+  const clearAll = () => {
     onFiltersChange([]);
   };
 
   return (
     <div className="fixed inset-0 bg-black/50 backdrop-blur-sm z-50 flex items-center justify-center p-4">
-      <div className="bg-white rounded-2xl max-w-2xl w-full max-h-[80vh] overflow-hidden shadow-2xl">
+      <div className="bg-white rounded-2xl w-full max-w-4xl max-h-[90vh] overflow-hidden">
         {/* Header */}
-        <div className="flex items-center justify-between p-6 border-b border-gray-200">
-          <div className="flex items-center space-x-2">
-            <Filter className="w-5 h-5 text-blue-600" />
+        <div className="flex items-center justify-between p-6 border-b">
+          <div>
             <h2 className="text-xl font-bold">Advanced Filters</h2>
+            <p className="text-gray-600 text-sm">Select the cultural aspects you want to explore</p>
           </div>
           <Button variant="ghost" size="sm" onClick={onClose}>
             <X className="w-5 h-5" />
@@ -75,42 +77,40 @@ const AdvancedFiltersModal = ({ isOpen, onClose, selectedFilters, onFiltersChang
         </div>
 
         {/* Content */}
-        <div className="p-6 overflow-y-auto max-h-[60vh]">
-          <div className="space-y-6">
-            {filterCategories.map((category) => (
-              <div key={category.title}>
-                <h3 className="text-lg font-semibold mb-3 text-gray-800">{category.title}</h3>
-                <div className="grid grid-cols-2 gap-2">
-                  {category.filters.map((filter) => (
-                    <button
-                      key={filter.id}
-                      onClick={() => toggleFilter(filter.id)}
-                      className={`flex items-center space-x-2 p-3 rounded-lg text-sm font-medium transition-all ${
-                        selectedFilters.includes(filter.id)
-                          ? 'bg-blue-500 text-white shadow-md'
-                          : 'bg-gray-50 hover:bg-gray-100 text-gray-700 border border-gray-200'
-                      }`}
-                    >
-                      <span>{filter.icon}</span>
-                      <span>{filter.label}</span>
-                    </button>
-                  ))}
-                </div>
+        <div className="p-6 overflow-y-auto max-h-[calc(90vh-120px)]">
+          {categories.map(category => (
+            <div key={category} className="mb-8">
+              <h3 className="text-lg font-semibold text-gray-800 mb-4">{category}</h3>
+              <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-3">
+                {allFilters.filter(f => f.category === category).map(filter => (
+                  <button
+                    key={filter.id}
+                    onClick={() => toggleFilter(filter.id)}
+                    className={`flex items-center space-x-2 p-3 rounded-lg text-sm font-medium transition-all ${
+                      selectedFilters.includes(filter.id)
+                        ? 'bg-blue-500 text-white shadow-md'
+                        : 'bg-gray-50 hover:bg-gray-100 text-gray-700 border border-gray-200'
+                    }`}
+                  >
+                    <span className="text-lg">{filter.emoji}</span>
+                    <span className="truncate">{filter.label}</span>
+                  </button>
+                ))}
               </div>
-            ))}
-          </div>
+            </div>
+          ))}
         </div>
 
         {/* Footer */}
-        <div className="flex items-center justify-between p-6 border-t border-gray-200 bg-gray-50">
+        <div className="flex items-center justify-between p-6 border-t bg-gray-50">
           <div className="text-sm text-gray-600">
-            {selectedFilters.length} filter{selectedFilters.length !== 1 ? 's' : ''} selected
+            {selectedFilters.length} filters selected
           </div>
           <div className="flex space-x-3">
-            <Button variant="outline" onClick={clearAllFilters}>
+            <Button variant="outline" onClick={clearAll}>
               Clear All
             </Button>
-            <Button onClick={onClose} className="bg-blue-600 hover:bg-blue-700">
+            <Button onClick={onClose}>
               Apply Filters
             </Button>
           </div>

@@ -1,15 +1,15 @@
 import { useState } from 'react';
-import { Link, useNavigate } from 'react-router-dom';
-import { ArrowLeft, MapPin, Filter, Search, Globe, Users, Shield, Heart, X } from 'lucide-react';
+import { useNavigate } from 'react-router-dom';
+import { Globe, Users, X } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import AdvancedFiltersModal from '@/components/AdvancedFiltersModal';
+import Navbar from '@/components/Navbar';
 
 const Explore = () => {
   const navigate = useNavigate();
   const [selectedFilters, setSelectedFilters] = useState<string[]>([]);
   const [searchQuery, setSearchQuery] = useState('');
-  const [showFilters, setShowFilters] = useState(false);
   const [showAdvancedFilters, setShowAdvancedFilters] = useState(false);
 
   // Real culture data from Cannes (matching CultureMap.tsx)
@@ -196,37 +196,10 @@ const Explore = () => {
 
   return (
     <div className="min-h-screen bg-gradient-to-br from-blue-50 via-purple-50 to-pink-50">
-      {/* Header - Mobile Optimized */}
-      <header className="bg-white/90 backdrop-blur-sm border-b border-white/20 sticky top-0 z-50">
-        <div className="container mx-auto px-4 py-4">
-          <div className="flex items-center justify-between">
-            <Link to="/" className="flex items-center space-x-2">
-              <div className="w-8 h-8 bg-gradient-to-r from-blue-500 to-purple-600 rounded-lg flex items-center justify-center">
-                <MapPin className="w-5 h-5 text-white" />
-              </div>
-              <div>
-                <h1 className="text-lg sm:text-xl font-bold bg-gradient-to-r from-blue-600 to-purple-600 bg-clip-text text-transparent">
-                  blockmaps
-                </h1>
-                <p className="text-xs text-gray-500 hidden sm:block">culture mapped live</p>
-              </div>
-            </Link>
-            
-            <Button 
-              onClick={() => navigate('/')}
-              variant="outline" 
-              size="sm"
-              className="flex items-center space-x-2"
-            >
-              <ArrowLeft className="w-4 h-4" />
-              <span className="hidden sm:inline">Back to Map</span>
-              <span className="sm:hidden">Back</span>
-            </Button>
-          </div>
-        </div>
-      </header>
+      {/* Use consistent Navbar */}
+      <Navbar />
 
-      <div className="container mx-auto px-4 py-6 sm:py-8">
+      <div className="container mx-auto px-4 py-6 sm:py-8 pt-20">
         {/* Page Header - Mobile Optimized */}
         <div className="text-center mb-6 sm:mb-8">
           <h1 className="text-2xl sm:text-4xl font-bold mb-2 sm:mb-4 bg-gradient-to-r from-blue-600 via-purple-600 to-pink-600 bg-clip-text text-transparent">
@@ -257,66 +230,51 @@ const Explore = () => {
         <div className="mb-6 sm:mb-8">
           <div className="flex flex-col sm:flex-row gap-3 sm:gap-4 mb-4 sm:mb-6">
             <div className="flex-1 relative">
-              <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400 w-4 h-4 sm:w-5 sm:h-5" />
               <Input
                 placeholder="Search cities, countries..."
                 value={searchQuery}
                 onChange={(e) => setSearchQuery(e.target.value)}
-                className="pl-10 h-10 sm:h-12 text-sm sm:text-lg"
+                className="pl-4 h-10 sm:h-12 text-sm sm:text-lg"
               />
             </div>
             <Button 
               variant="outline" 
-              size="sm"
-              onClick={() => setShowFilters(!showFilters)}
-              className="flex items-center space-x-2 sm:hidden"
-            >
-              <Filter className="w-4 h-4" />
-              <span>Filters</span>
-            </Button>
-            <Button 
-              variant="outline" 
               size="lg" 
               onClick={() => setShowAdvancedFilters(true)}
-              className="hidden sm:flex items-center space-x-2"
+              className="flex items-center space-x-2"
             >
-              <Filter className="w-5 h-5" />
               <span>Advanced Filters</span>
             </Button>
           </div>
 
-          {/* Filter Tags - Mobile Responsive */}
-          <div className={`${showFilters ? 'block' : 'hidden'} sm:block`}>
-            <div className="flex flex-wrap gap-2 mb-4">
-              {filterOptions.map((filter) => (
-                <button
-                  key={filter.id}
-                  onClick={() => toggleFilter(filter.id)}
-                  className={`flex items-center space-x-2 px-3 sm:px-4 py-2 rounded-full text-xs sm:text-sm font-medium transition-all ${
-                    selectedFilters.includes(filter.id)
-                      ? 'bg-blue-500 text-white shadow-md'
-                      : 'bg-white hover:bg-gray-50 text-gray-700 border border-gray-200'
-                  }`}
-                >
-                  <span>{filter.icon}</span>
-                  <span>{filter.label}</span>
-                </button>
-              ))}
-            </div>
-            
-            {/* Clear Filters Button */}
-            {(selectedFilters.length > 0 || searchQuery) && (
-              <Button
-                onClick={clearAllFilters}
-                variant="outline"
-                size="sm"
-                className="flex items-center space-x-2 text-gray-600 hover:text-gray-800"
+          <div className="flex flex-wrap gap-2 mb-4">
+            {filterOptions.map((filter) => (
+              <button
+                key={filter.id}
+                onClick={() => toggleFilter(filter.id)}
+                className={`flex items-center space-x-2 px-3 sm:px-4 py-2 rounded-full text-xs sm:text-sm font-medium transition-all ${
+                  selectedFilters.includes(filter.id)
+                    ? 'bg-blue-500 text-white shadow-md'
+                    : 'bg-white hover:bg-gray-50 text-gray-700 border border-gray-200'
+                }`}
               >
-                <X className="w-4 h-4" />
-                <span>Clear All Filters</span>
-              </Button>
-            )}
+                <span>{filter.icon}</span>
+                <span>{filter.label}</span>
+              </button>
+            ))}
           </div>
+          
+          {(selectedFilters.length > 0 || searchQuery) && (
+            <Button
+              onClick={clearAllFilters}
+              variant="outline"
+              size="sm"
+              className="flex items-center space-x-2 text-gray-600 hover:text-gray-800"
+            >
+              <X className="w-4 h-4" />
+              <span>Clear All Filters</span>
+            </Button>
+          )}
         </div>
 
         {/* Cities Grid - Mobile Responsive */}
@@ -438,7 +396,6 @@ const Explore = () => {
         </div>
       </div>
 
-      {/* Advanced Filters Modal */}
       <AdvancedFiltersModal
         isOpen={showAdvancedFilters}
         onClose={() => setShowAdvancedFilters(false)}

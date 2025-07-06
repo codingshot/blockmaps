@@ -1,138 +1,107 @@
 
+import { Link } from 'react-router-dom';
 import { ArrowLeft } from 'lucide-react';
-import { useNavigate } from 'react-router-dom';
 import { Button } from '@/components/ui/button';
-import Navbar from '@/components/Navbar';
 
 const Terms = () => {
-  const navigate = useNavigate();
-
   return (
     <div className="min-h-screen bg-gradient-to-br from-blue-50 via-purple-50 to-pink-50">
-      <Navbar />
-      
-      <div className="pt-20 pb-12 px-4">
+      <div className="container mx-auto px-4 py-8">
         <div className="max-w-4xl mx-auto">
-          <div className="mb-6">
-            <Button 
-              variant="ghost" 
-              onClick={() => navigate(-1)}
-              className="mb-4"
-            >
-              <ArrowLeft className="w-4 h-4 mr-2" />
-              Back
-            </Button>
-            <h1 className="text-4xl font-bold bg-gradient-to-r from-blue-600 via-purple-600 to-pink-600 bg-clip-text text-transparent">
-              📄 Terms of Service
-            </h1>
-            <p className="text-gray-600 mt-2">Last updated: {new Date().toLocaleDateString()}</p>
+          {/* Header */}
+          <div className="flex items-center justify-between mb-8">
+            <Link to="/" className="flex items-center space-x-2 text-blue-600 hover:text-blue-700">
+              <ArrowLeft className="w-5 h-5" />
+              <span>Back to Blockmaps</span>
+            </Link>
           </div>
 
-          <div className="bg-white/80 backdrop-blur-sm rounded-2xl shadow-xl p-8 space-y-8">
-            <section>
-              <h2 className="text-2xl font-semibold text-gray-900 mb-4 flex items-center">
-                🏢 About slangdotufn
-              </h2>
-              <p className="text-gray-700 leading-relaxed">
-                These Terms of Service govern your use of Blockmaps, operated by slangdotufn ("Company", "we", "our", or "us"). 
-                By accessing or using our service, you agree to be bound by these terms.
-              </p>
-            </section>
+          {/* Content */}
+          <div className="bg-white rounded-2xl p-8 shadow-lg">
+            <h1 className="text-4xl font-bold mb-8 bg-gradient-to-r from-blue-600 via-purple-600 to-pink-600 bg-clip-text text-transparent">
+              Terms of Service
+            </h1>
 
-            <section>
-              <h2 className="text-2xl font-semibold text-gray-900 mb-4 flex items-center">
-                ✅ Acceptance of Terms
-              </h2>
-              <p className="text-gray-700 leading-relaxed">
-                By creating an account or using Blockmaps, you acknowledge that you have read, understood, 
-                and agree to be bound by these Terms of Service and our Privacy Policy.
+            <div className="prose prose-lg max-w-none">
+              <p className="text-gray-600 mb-6">
+                <strong>Effective Date:</strong> January 1, 2025
               </p>
-            </section>
 
-            <section>
-              <h2 className="text-2xl font-semibold text-gray-900 mb-4 flex items-center">
-                🗺️ Service Description
-              </h2>
-              <p className="text-gray-700 leading-relaxed mb-4">
-                Blockmaps is a platform that allows users to map and share cultural information about neighborhoods and cities. 
-                Our services include:
+              <h2 className="text-2xl font-semibold text-gray-800 mb-4">1. Acceptance of Terms</h2>
+              <p className="text-gray-600 mb-6">
+                By accessing or using Blockmaps (the "Service"), operated by slang.fun ("Company", "we", "us", or "our"), 
+                you agree to be bound by these Terms of Service ("Terms"). If you disagree with any part of these terms, 
+                then you may not access the Service.
               </p>
-              <ul className="list-disc pl-6 text-gray-700 space-y-2">
-                <li>Interactive mapping of cultural points of interest</li>
-                <li>Community contributions and data sharing</li>
-                <li>Location-based cultural information</li>
-                <li>User-generated content and reviews</li>
+
+              <h2 className="text-2xl font-semibold text-gray-800 mb-4">2. Description of Service</h2>
+              <p className="text-gray-600 mb-6">
+                Blockmaps is a platform that allows users to create, share, and explore cultural maps of neighborhoods and cities. 
+                Users can contribute data points, insights, and information about local culture, safety, amenities, and other 
+                neighborhood characteristics.
+              </p>
+
+              <h2 className="text-2xl font-semibold text-gray-800 mb-4">3. User Accounts</h2>
+              <p className="text-gray-600 mb-6">
+                To use certain features of the Service, you may be required to create an account. You are responsible for 
+                safeguarding your account credentials and for all activities that occur under your account. You agree to 
+                immediately notify us of any unauthorized use of your account.
+              </p>
+
+              <h2 className="text-2xl font-semibold text-gray-800 mb-4">4. User Content and Conduct</h2>
+              <p className="text-gray-600 mb-4">
+                You are solely responsible for the content you contribute to the Service. By contributing content, you represent that:
+              </p>
+              <ul className="list-disc list-inside text-gray-600 mb-6 space-y-2">
+                <li>You own the rights to the content or have permission to use it</li>
+                <li>The content is accurate to the best of your knowledge</li>
+                <li>The content does not violate any laws or third-party rights</li>
+                <li>The content is not defamatory, harassing, or offensive</li>
               </ul>
-            </section>
 
-            <section>
-              <h2 className="text-2xl font-semibold text-gray-900 mb-4 flex items-center">
-                👤 User Responsibilities
-              </h2>
-              <ul className="list-disc pl-6 text-gray-700 space-y-2">
-                <li>Provide accurate and truthful information</li>
-                <li>Respect other users and communities</li>
-                <li>Do not post inappropriate, offensive, or illegal content</li>
-                <li>Comply with local laws and regulations</li>
-                <li>Protect your account credentials</li>
-              </ul>
-            </section>
-
-            <section>
-              <h2 className="text-2xl font-semibold text-gray-900 mb-4 flex items-center">
-                🚫 Prohibited Activities
-              </h2>
-              <ul className="list-disc pl-6 text-gray-700 space-y-2">
-                <li>Harassment or discrimination of any kind</li>
-                <li>Sharing false or misleading information</li>
-                <li>Attempting to gain unauthorized access to our systems</li>
-                <li>Using the service for illegal activities</li>
-                <li>Violating intellectual property rights</li>
-              </ul>
-            </section>
-
-            <section>
-              <h2 className="text-2xl font-semibold text-gray-900 mb-4 flex items-center">
-                📱 Intellectual Property
-              </h2>
-              <p className="text-gray-700 leading-relaxed">
-                The Blockmaps platform, including its design, features, and content, is owned by slangdotufn. 
-                User-generated content remains the property of the respective users, but by using our service, 
-                you grant us a license to use, display, and distribute such content within the platform.
+              <h2 className="text-2xl font-semibold text-gray-800 mb-4">5. Privacy and Data</h2>
+              <p className="text-gray-600 mb-6">
+                Your privacy is important to us. Please review our Privacy Policy, which also governs your use of the Service, 
+                to understand our practices regarding the collection and use of your information.
               </p>
-            </section>
 
-            <section>
-              <h2 className="text-2xl font-semibold text-gray-900 mb-4 flex items-center">
-                ⚠️ Limitation of Liability
-              </h2>
-              <p className="text-gray-700 leading-relaxed">
-                slangdotufn provides Blockmaps "as is" without warranties of any kind. We are not liable for 
-                any damages arising from your use of the service, including but not limited to direct, indirect, 
-                incidental, or consequential damages.
+              <h2 className="text-2xl font-semibold text-gray-800 mb-4">6. Intellectual Property</h2>
+              <p className="text-gray-600 mb-6">
+                The Service and its original content, features, and functionality are and will remain the exclusive property 
+                of slang.fun and its licensors. The Service is protected by copyright, trademark, and other laws.
               </p>
-            </section>
 
-            <section>
-              <h2 className="text-2xl font-semibold text-gray-900 mb-4 flex items-center">
-                🔄 Changes to Terms
-              </h2>
-              <p className="text-gray-700 leading-relaxed">
-                We reserve the right to modify these terms at any time. We will notify users of significant 
-                changes via email or through the platform. Continued use of the service after changes 
-                constitutes acceptance of the new terms.
+              <h2 className="text-2xl font-semibold text-gray-800 mb-4">7. Disclaimer of Warranties</h2>
+              <p className="text-gray-600 mb-6">
+                The Service is provided on an "AS IS" and "AS AVAILABLE" basis. slang.fun makes no warranties, expressed or implied, 
+                and hereby disclaims all other warranties including, without limitation, implied warranties of merchantability, 
+                fitness for a particular purpose, and non-infringement.
               </p>
-            </section>
 
-            <section>
-              <h2 className="text-2xl font-semibold text-gray-900 mb-4 flex items-center">
-                📞 Contact Information
-              </h2>
-              <p className="text-gray-700 leading-relaxed">
-                If you have questions about these Terms of Service, please contact slangdotufn through 
-                our official channels or support system.
+              <h2 className="text-2xl font-semibold text-gray-800 mb-4">8. Limitation of Liability</h2>
+              <p className="text-gray-600 mb-6">
+                In no event shall slang.fun, nor its directors, employees, partners, agents, suppliers, or affiliates, be liable 
+                for any indirect, incidental, special, consequential, or punitive damages, including without limitation, loss of 
+                profits, data, use, goodwill, or other intangible losses.
               </p>
-            </section>
+
+              <h2 className="text-2xl font-semibold text-gray-800 mb-4">9. Termination</h2>
+              <p className="text-gray-600 mb-6">
+                We may terminate or suspend your account and bar access to the Service immediately, without prior notice or liability, 
+                under our sole discretion, for any reason whatsoever, including without limitation if you breach the Terms.
+              </p>
+
+              <h2 className="text-2xl font-semibold text-gray-800 mb-4">10. Changes to Terms</h2>
+              <p className="text-gray-600 mb-6">
+                We reserve the right to modify or replace these Terms at any time. If a revision is material, we will try to 
+                provide at least 30 days notice prior to any new terms taking effect.
+              </p>
+
+              <h2 className="text-2xl font-semibold text-gray-800 mb-4">11. Contact Information</h2>
+              <p className="text-gray-600 mb-6">
+                If you have any questions about these Terms of Service, please contact us at legal@slang.fun.
+              </p>
+            </div>
           </div>
         </div>
       </div>

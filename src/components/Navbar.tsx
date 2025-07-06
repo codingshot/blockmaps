@@ -19,10 +19,6 @@ const Navbar = () => {
     }
   };
 
-  const getUserDisplayInfo = () => {
-    return { initial: '🥷', display: 'Ninja' };
-  };
-
   return (
     <header className="fixed top-0 left-0 right-0 z-50 bg-white/95 backdrop-blur-md border-b border-gradient-to-r from-blue-200/30 via-purple-200/30 to-pink-200/30 shadow-lg">
       <div className="container mx-auto px-4 py-3 flex items-center justify-between">
@@ -46,15 +42,6 @@ const Navbar = () => {
         </div>
         
         <div className="flex items-center space-x-2">
-          <Button 
-            onClick={() => navigate('/docs')}
-            variant="ghost" 
-            size="sm"
-            className="flex items-center space-x-2 text-purple-600 hover:bg-purple-50 transition-all duration-300"
-          >
-            <span>Docs</span>
-          </Button>
-          
           <Button 
             onClick={() => navigate('/explore')}
             variant="outline" 
