@@ -127,8 +127,7 @@ const Index = () => {
             className="flex items-center space-x-2 border-2 border-gradient-to-r from-blue-400 to-purple-400 hover:bg-gradient-to-r hover:from-blue-50 hover:to-purple-50 text-blue-600 hover:text-purple-600 transition-all duration-300"
           >
             <Search className="w-4 h-4" />
-            <span className="hidden sm:inline">Explore All Maps</span>
-            <span className="sm:hidden">Explore</span>
+            <span>Explore</span>
           </Button>
         </div>
       </header>
@@ -209,16 +208,6 @@ const Index = () => {
         isOpen={showAuthModal}
         onClose={() => setShowAuthModal(false)}
       />
-
-      {/* Quick Action Buttons - Mobile Responsive */}
-      <div className="absolute bottom-4 sm:bottom-6 right-4 sm:right-6 z-40 space-y-3">
-        <div className="bg-gradient-to-br from-orange-400 to-red-500 backdrop-blur-sm rounded-full p-2 sm:p-3 shadow-xl cursor-pointer hover:shadow-2xl hover:scale-110 transition-all duration-300">
-          <span className="text-xl sm:text-2xl">📍</span>
-        </div>
-        <div className="bg-gradient-to-br from-green-400 to-blue-500 backdrop-blur-sm rounded-full p-2 sm:p-3 shadow-xl cursor-pointer hover:shadow-2xl hover:scale-110 transition-all duration-300">
-          <span className="text-xl sm:text-2xl">➕</span>
-        </div>
-      </div>
     </div>
   );
 };
