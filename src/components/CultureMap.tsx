@@ -142,13 +142,15 @@ const CultureMap = ({ initialLocation, availableCities }: CultureMapProps) => {
       </div>
 
       {/* Map Filters - Bottom left */}
-      <MapFilters 
-        selectedFilters={selectedFilters}
-        onFiltersChange={setSelectedFilters}
-      />
+      <div className="absolute bottom-20 left-4 z-40">
+        <MapFilters 
+          selectedFilters={selectedFilters}
+          onFiltersChange={setSelectedFilters}
+        />
+      </div>
 
-      {/* Zoom Controls - Positioned above map filters with proper spacing */}
-      <div className="absolute bottom-80 left-4 z-30">
+      {/* Zoom Controls - Positioned directly below filters with minimal spacing */}
+      <div className="absolute bottom-4 left-4 z-30">
         <MapZoomControls onZoomIn={handleZoomIn} onZoomOut={handleZoomOut} />
       </div>
 
