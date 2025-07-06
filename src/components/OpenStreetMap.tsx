@@ -1,3 +1,4 @@
+
 import { useEffect, useRef, useState } from 'react';
 import { MapPin, Loader } from 'lucide-react';
 
@@ -21,6 +22,7 @@ const OpenStreetMap = ({ center, zoom = 13, markers = [], onMapClick }: OpenStre
   const [mapInstance, setMapInstance] = useState<any>(null);
   const [error, setError] = useState<string | null>(null);
   const markersRef = useRef<any[]>([]);
+  const leafletRef = useRef<any>(null);
 
   useEffect(() => {
     let mounted = true;
@@ -30,21 +32,30 @@ const OpenStreetMap = ({ center, zoom = 13, markers = [], onMapClick }: OpenStre
       try {
         console.log('Loading Leaflet library...');
         
-        // Check if container exists
+        // Check if container exists and is visible
         if (!mapRef.current) {
           console.log('No map container found');
+          return;
+        }
+
+        // Wait a bit more for DOM to be ready
+        await new Promise(resolve => setTimeout(resolve, 200));
+
+        if (!mounted) {
+          console.log('Component unmounted during wait');
           return;
         }
 
         // Dynamically import Leaflet
         const leafletModule = await import('leaflet');
         const L = leafletModule.default;
+        leafletRef.current = L;
         
         // Import CSS
         await import('leaflet/dist/leaflet.css');
 
-        if (!mounted) {
-          console.log('Component unmounted during loading');
+        if (!mounted || !mapRef.current) {
+          console.log('Component unmounted or container lost during loading');
           return;
         }
 
@@ -58,51 +69,68 @@ const OpenStreetMap = ({ center, zoom = 13, markers = [], onMapClick }: OpenStre
           shadowUrl: 'https://cdnjs.cloudflare.com/ajax/libs/leaflet/1.9.4/images/marker-shadow.png',
         });
 
-        // Create map with retry logic
+        // Ensure container has dimensions
+        const container = mapRef.current;
+        if (container.offsetWidth === 0 || container.offsetHeight === 0) {
+          console.log('Container has no dimensions, setting default');
+          container.style.width = '100%';
+          container.style.height = '100%';
+          container.style.minHeight = '400px';
+        }
+
         try {
-          leafletMap = L.map(mapRef.current, {
+          // Clear any existing map instance
+          if (leafletMap) {
+            leafletMap.remove();
+          }
+
+          leafletMap = L.map(container, {
             center: [center.lat, center.lng],
             zoom: zoom,
             zoomControl: true,
             attributionControl: true,
-            preferCanvas: true
+            preferCanvas: false,
+            fadeAnimation: true,
+            zoomAnimation: true
           });
 
           console.log('Map instance created successfully');
 
-          // Add OpenStreetMap tiles with multiple fallback servers
-          const tileUrls = [
-            'https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png',
-            'https://tile.openstreetmap.org/{z}/{x}/{y}.png',
-            'https://{s}.tile.openstreetmap.fr/osmfr/{z}/{x}/{y}.png'
-          ];
+          // Add tile layer with error handling
+          const tileLayer = L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
+            attribution: '© <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> contributors',
+            maxZoom: 19,
+            minZoom: 1
+          });
 
-          let tileLayer;
-          for (const url of tileUrls) {
-            try {
-              tileLayer = L.tileLayer(url, {
-                attribution: '© <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> contributors',
-                maxZoom: 19,
-                minZoom: 1
-              });
-              break;
-            } catch (tileError) {
-              console.warn('Failed to load tiles from:', url);
+          tileLayer.addTo(leafletMap);
+
+          // Handle tile loading events
+          tileLayer.on('loading', () => {
+            console.log('Tiles are loading...');
+          });
+
+          tileLayer.on('load', () => {
+            console.log('Tiles loaded successfully');
+            if (mounted) {
+              setIsLoading(false);
+              setError(null);
             }
-          }
+          });
 
-          if (tileLayer) {
-            tileLayer.addTo(leafletMap);
-            
-            // Set loading to false after tiles start loading
-            setTimeout(() => {
-              if (mounted) {
-                console.log('Map loaded successfully');
-                setIsLoading(false);
-                setError(null);
-              }
-            }, 1500);
-          }
+          tileLayer.on('tileerror', (e: any) => {
+            console.warn('Tile loading error:', e);
+            // Don't set error state for individual tile failures
+          });
+
+          // Fallback timeout to hide loading state
+          setTimeout(() => {
+            if (mounted && isLoading) {
+              console.log('Fallback: Setting loading to false after timeout');
+              setIsLoading(false);
+              setError(null);
+            }
+          }, 3000);
 
           // Handle map clicks
           if (onMapClick) {
@@ -111,6 +139,15 @@ const OpenStreetMap = ({ center, zoom = 13, markers = [], onMapClick }: OpenStre
               onMapClick(e.latlng.lat, e.latlng.lng);
             });
           }
+
+          // Map ready event
+          leafletMap.whenReady(() => {
+            console.log('Map is ready');
+            if (mounted) {
+              setIsLoading(false);
+              setError(null);
+            }
+          });
 
           if (mounted) {
             setMapInstance(leafletMap);
@@ -133,22 +170,30 @@ const OpenStreetMap = ({ center, zoom = 13, markers = [], onMapClick }: OpenStre
       }
     };
 
-    // Add a small delay to ensure DOM is ready
-    const timer = setTimeout(loadLeaflet, 100);
+    // Start loading with a delay to ensure DOM is ready
+    const timer = setTimeout(() => {
+      if (mounted && mapRef.current) {
+        loadLeaflet();
+      }
+    }, 100);
 
     return () => {
       mounted = false;
       clearTimeout(timer);
       if (leafletMap) {
         console.log('Cleaning up map instance');
-        leafletMap.remove();
+        try {
+          leafletMap.remove();
+        } catch (e) {
+          console.warn('Error during map cleanup:', e);
+        }
       }
     };
-  }, [center.lat, center.lng, zoom]);
+  }, [center.lat, center.lng, zoom, isLoading]);
 
   // Update markers when they change
   useEffect(() => {
-    if (!mapInstance) return;
+    if (!mapInstance || !leafletRef.current) return;
 
     console.log('Updating markers:', markers.length);
 
@@ -165,7 +210,7 @@ const OpenStreetMap = ({ center, zoom = 13, markers = [], onMapClick }: OpenStre
     // Add new markers
     markers.forEach((marker) => {
       try {
-        const L = (window as any).L;
+        const L = leafletRef.current;
         if (!L) return;
 
         const customIcon = L.divIcon({
@@ -210,7 +255,11 @@ const OpenStreetMap = ({ center, zoom = 13, markers = [], onMapClick }: OpenStre
           <p className="text-red-600 font-semibold">Failed to load map</p>
           <p className="text-gray-600 text-sm">{error}</p>
           <button 
-            onClick={() => window.location.reload()} 
+            onClick={() => {
+              setError(null);
+              setIsLoading(true);
+              window.location.reload();
+            }} 
             className="mt-2 px-4 py-2 bg-blue-500 text-white rounded hover:bg-blue-600"
           >
             Retry
@@ -228,6 +277,7 @@ const OpenStreetMap = ({ center, zoom = 13, markers = [], onMapClick }: OpenStre
             <Loader className="w-8 h-8 animate-spin text-blue-500 mx-auto" />
           </div>
           <p className="text-gray-600 font-medium">Loading map...</p>
+          <p className="text-xs text-gray-500 mt-1">This may take a moment</p>
         </div>
       </div>
     );
@@ -235,7 +285,11 @@ const OpenStreetMap = ({ center, zoom = 13, markers = [], onMapClick }: OpenStre
 
   return (
     <div className="relative w-full h-full">
-      <div ref={mapRef} className="w-full h-full" />
+      <div 
+        ref={mapRef} 
+        className="w-full h-full"
+        style={{ minHeight: '400px' }}
+      />
     </div>
   );
 };
