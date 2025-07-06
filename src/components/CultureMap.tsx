@@ -1,10 +1,12 @@
 import { useState } from 'react';
-import { MapPin, Users, Shield, Heart, Plus } from 'lucide-react';
+import { MapPin, Users, Shield, Heart, Plus, User } from 'lucide-react';
 import { usePrivy } from '@privy-io/react-auth';
 import OpenStreetMap from './OpenStreetMap';
 import AddPointForm from './AddPointForm';
 import AuthModal from './AuthModal';
+import UserDashboard from './UserDashboard';
 import { Button } from '@/components/ui/button';
+import { useSmartContracts } from '@/utils/smartContracts';
 
 interface CultureMapProps {
   initialLocation: {lat: number, lng: number} | null;
@@ -37,8 +39,10 @@ const CultureMap = ({ initialLocation, availableCities }: CultureMapProps) => {
   const [showAddForm, setShowAddForm] = useState(false);
   const [selectedLocation, setSelectedLocation] = useState<{lat: number, lng: number} | null>(null);
   const [showAuthModal, setShowAuthModal] = useState(false);
+  const [showUserDashboard, setShowUserDashboard] = useState(false);
   
   const { ready, authenticated, user } = usePrivy();
+  const { mintCulturePoint } = useSmartContracts();
 
   const filteredMarkers = cannesCultureData.filter(point => 
     selectedLayer === 'all' || point.type === selectedLayer
@@ -56,9 +60,25 @@ const CultureMap = ({ initialLocation, availableCities }: CultureMapProps) => {
     setShowAddForm(true);
   };
 
-  const handleAddPoint = (newPoint: any) => {
+  const handleAddPoint = async (newPoint: any) => {
     setCultureData(prev => [...prev, newPoint]);
     console.log('New point added:', newPoint);
+    
+    // If user is authenticated, mint NFT
+    if (authenticated && user) {
+      try {
+        console.log('Minting NFT for culture point...');
+        const nftResult = await mintCulturePoint(newPoint);
+        console.log('NFT minted successfully:', nftResult);
+        
+        // Show success notification
+        // In a real app, you'd use a toast notification
+        alert(`Culture point added and NFT minted! Token ID: ${nftResult.tokenId}`);
+      } catch (error) {
+        console.error('Failed to mint NFT:', error);
+        // Still allow the point to be added locally even if NFT minting fails
+      }
+    }
   };
 
   const handleAddButtonClick = () => {
@@ -183,16 +203,20 @@ const CultureMap = ({ initialLocation, availableCities }: CultureMapProps) => {
         <Button
           onClick={handleAddButtonClick}
           size="lg"
-          className="h-12 w-12 sm:h-14 sm:w-14 rounded-full bg-gradient-to-r from-blue-500 to-purple-600 hover:from-blue-600 hover:to-purple-700 shadow-lg hover:shadow-xl transition-all"
+          className="h-12 w-12 sm:h-14 sm:w-14 rounded-full bg-gradient-to-r from-blue-500 to-purple-600 hover:from-blue-600 hover:to-purple-700 shadow-lg hover:shadow-xl transition-all hover:scale-105"
         >
           <Plus className="w-6 h-6" />
         </Button>
       </div>
 
-      {/* User Info - Mobile Responsive */}
+      {/* User Info - Mobile Responsive with Dashboard Access */}
       {ready && authenticated && user && (
         <div className="absolute top-2 right-2 sm:top-6 sm:right-6 z-30">
-          <div className="bg-white/90 backdrop-blur-sm rounded-full px-3 py-2 shadow-lg border border-white/20">
+          <Button
+            variant="ghost"
+            onClick={() => setShowUserDashboard(true)}
+            className="bg-white/90 backdrop-blur-sm rounded-full px-3 py-2 shadow-lg border border-white/20 hover:bg-white/95 hover:shadow-xl transition-all hover:scale-105"
+          >
             <div className="flex items-center space-x-2">
               <div className="w-6 h-6 sm:w-8 sm:h-8 bg-gradient-to-r from-blue-500 to-purple-600 rounded-full flex items-center justify-center">
                 <span className="text-xs sm:text-sm text-white font-bold">
@@ -202,8 +226,9 @@ const CultureMap = ({ initialLocation, availableCities }: CultureMapProps) => {
               <span className="text-xs sm:text-sm font-medium hidden sm:inline">
                 {getUserDisplayInfo().display}
               </span>
+              <User className="w-4 h-4 text-gray-500" />
             </div>
-          </div>
+          </Button>
         </div>
       )}
 
@@ -219,6 +244,12 @@ const CultureMap = ({ initialLocation, availableCities }: CultureMapProps) => {
       <AuthModal
         isOpen={showAuthModal}
         onClose={() => setShowAuthModal(false)}
+      />
+
+      {/* User Dashboard */}
+      <UserDashboard
+        isOpen={showUserDashboard}
+        onClose={() => setShowUserDashboard(false)}
       />
     </div>
   );

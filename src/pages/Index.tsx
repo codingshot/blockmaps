@@ -120,15 +120,25 @@ const Index = () => {
             </div>
           </div>
           
-          <Button 
-            onClick={handleExploreClick}
-            variant="outline" 
-            size="sm"
-            className="flex items-center space-x-2 border-2 border-gradient-to-r from-blue-400 to-purple-400 hover:bg-gradient-to-r hover:from-blue-50 hover:to-purple-50 text-blue-600 hover:text-purple-600 transition-all duration-300"
-          >
-            <Search className="w-4 h-4" />
-            <span>Explore</span>
-          </Button>
+          <div className="flex items-center space-x-2">
+            <Button 
+              onClick={() => navigate('/docs')}
+              variant="ghost" 
+              size="sm"
+              className="flex items-center space-x-2 text-purple-600 hover:bg-purple-50 transition-all duration-300"
+            >
+              <span>Docs</span>
+            </Button>
+            
+            <Button 
+              onClick={handleExploreClick}
+              variant="outline" 
+              size="sm"
+              className="flex items-center space-x-2 border-2 border-gradient-to-r from-blue-400 to-purple-400 hover:bg-gradient-to-r hover:from-blue-50 hover:to-purple-50 text-blue-600 hover:text-purple-600 transition-all duration-300"
+            >
+              <span>Explore</span>
+            </Button>
+          </div>
         </div>
       </header>
 
