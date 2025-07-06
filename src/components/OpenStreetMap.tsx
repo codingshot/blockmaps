@@ -32,17 +32,8 @@ const OpenStreetMap = ({ center, zoom = 13, markers = [], onMapClick }: OpenStre
       try {
         console.log('Loading Leaflet library...');
         
-        // Check if container exists and is visible
         if (!mapRef.current) {
           console.log('No map container found');
-          return;
-        }
-
-        // Wait a bit more for DOM to be ready
-        await new Promise(resolve => setTimeout(resolve, 200));
-
-        if (!mounted) {
-          console.log('Component unmounted during wait');
           return;
         }
 
@@ -78,88 +69,53 @@ const OpenStreetMap = ({ center, zoom = 13, markers = [], onMapClick }: OpenStre
           container.style.minHeight = '400px';
         }
 
-        try {
-          // Clear any existing map instance
-          if (leafletMap) {
-            leafletMap.remove();
-          }
+        // Clear any existing map instance
+        if (leafletMap) {
+          leafletMap.remove();
+        }
 
-          leafletMap = L.map(container, {
-            center: [center.lat, center.lng],
-            zoom: zoom,
-            zoomControl: true,
-            attributionControl: true,
-            preferCanvas: false,
-            fadeAnimation: true,
-            zoomAnimation: true
+        leafletMap = L.map(container, {
+          center: [center.lat, center.lng],
+          zoom: zoom,
+          zoomControl: true,
+          attributionControl: true,
+        });
+
+        console.log('Map instance created successfully');
+
+        // Add tile layer
+        const tileLayer = L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
+          attribution: '© <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> contributors',
+          maxZoom: 19,
+          minZoom: 1
+        });
+
+        tileLayer.addTo(leafletMap);
+
+        // Handle map clicks
+        if (onMapClick) {
+          leafletMap.on('click', (e: any) => {
+            console.log('Map clicked at:', e.latlng.lat, e.latlng.lng);
+            onMapClick(e.latlng.lat, e.latlng.lng);
           });
+        }
 
-          console.log('Map instance created successfully');
-
-          // Add tile layer with error handling
-          const tileLayer = L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
-            attribution: '© <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> contributors',
-            maxZoom: 19,
-            minZoom: 1
-          });
-
-          tileLayer.addTo(leafletMap);
-
-          // Handle tile loading events
-          tileLayer.on('loading', () => {
-            console.log('Tiles are loading...');
-          });
-
-          tileLayer.on('load', () => {
-            console.log('Tiles loaded successfully');
-            if (mounted) {
-              setIsLoading(false);
-              setError(null);
-            }
-          });
-
-          tileLayer.on('tileerror', (e: any) => {
-            console.warn('Tile loading error:', e);
-            // Don't set error state for individual tile failures
-          });
-
-          // Fallback timeout to hide loading state
-          setTimeout(() => {
-            if (mounted && isLoading) {
-              console.log('Fallback: Setting loading to false after timeout');
-              setIsLoading(false);
-              setError(null);
-            }
-          }, 3000);
-
-          // Handle map clicks
-          if (onMapClick) {
-            leafletMap.on('click', (e: any) => {
-              console.log('Map clicked at:', e.latlng.lat, e.latlng.lng);
-              onMapClick(e.latlng.lat, e.latlng.lng);
-            });
-          }
-
-          // Map ready event
-          leafletMap.whenReady(() => {
-            console.log('Map is ready');
-            if (mounted) {
-              setIsLoading(false);
-              setError(null);
-            }
-          });
-
+        // Set loading to false after map is ready
+        leafletMap.whenReady(() => {
+          console.log('Map is ready');
           if (mounted) {
+            setIsLoading(false);
+            setError(null);
             setMapInstance(leafletMap);
           }
+        });
 
-        } catch (mapError) {
-          console.error('Error creating map:', mapError);
+        // Fallback timeout
+        setTimeout(() => {
           if (mounted) {
-            setError('Failed to initialize map');
             setIsLoading(false);
           }
-        }
+        }, 3000);
 
       } catch (error) {
         console.error('Error loading Leaflet:', error);
@@ -170,16 +126,10 @@ const OpenStreetMap = ({ center, zoom = 13, markers = [], onMapClick }: OpenStre
       }
     };
 
-    // Start loading with a delay to ensure DOM is ready
-    const timer = setTimeout(() => {
-      if (mounted && mapRef.current) {
-        loadLeaflet();
-      }
-    }, 100);
+    loadLeaflet();
 
     return () => {
       mounted = false;
-      clearTimeout(timer);
       if (leafletMap) {
         console.log('Cleaning up map instance');
         try {
@@ -189,7 +139,7 @@ const OpenStreetMap = ({ center, zoom = 13, markers = [], onMapClick }: OpenStre
         }
       }
     };
-  }, [center.lat, center.lng, zoom, isLoading]);
+  }, [center.lat, center.lng, zoom]);
 
   // Update markers when they change
   useEffect(() => {

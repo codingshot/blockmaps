@@ -1,8 +1,7 @@
-
 import { useEffect, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { usePrivy } from '@privy-io/react-auth';
-import { MapPin, Search, Layers } from 'lucide-react';
+import { MapPin, Layers } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import CultureMap from '@/components/CultureMap';
 import AuthModal from '@/components/AuthModal';
@@ -27,7 +26,12 @@ const Index = () => {
   ];
 
   useEffect(() => {
-    // Get user location
+    // Always default to Cannes to avoid loading issues
+    const defaultLocation = availableCities[0].coordinates;
+    setUserLocation(defaultLocation);
+    setIsLoadingLocation(false);
+
+    // Try to get user location but don't block the map
     if (navigator.geolocation) {
       navigator.geolocation.getCurrentPosition(
         (position) => {
@@ -35,43 +39,25 @@ const Index = () => {
             lat: position.coords.latitude,
             lng: position.coords.longitude
           });
-          setIsLoadingLocation(false);
-          
-          // Show onboarding after 5 seconds of map viewing
-          setTimeout(() => {
-            if (!authenticated) {
-              setShowAuthModal(true);
-            } else {
-              setShowOnboarding(true);
-            }
-          }, 5000);
         },
         () => {
-          // Default to Cannes if location access denied
-          setUserLocation(availableCities[0].coordinates);
-          setIsLoadingLocation(false);
-          setTimeout(() => {
-            if (!authenticated) {
-              setShowAuthModal(true);
-            } else {
-              setShowOnboarding(true);
-            }
-          }, 5000);
+          // Keep default location if geolocation fails
+          console.log('Geolocation failed, using default location');
         }
       );
-    } else {
-      // Default to Cannes if geolocation not supported
-      setUserLocation(availableCities[0].coordinates);
-      setIsLoadingLocation(false);
-      setTimeout(() => {
-        if (!authenticated) {
-          setShowAuthModal(true);
-        } else {
-          setShowOnboarding(true);
-        }
-      }, 5000);
     }
-  }, [authenticated]);
+
+    // Show onboarding after 5 seconds
+    const timer = setTimeout(() => {
+      if (!authenticated && ready) {
+        setShowAuthModal(true);
+      } else if (authenticated) {
+        setShowOnboarding(true);
+      }
+    }, 5000);
+
+    return () => clearTimeout(timer);
+  }, [authenticated, ready]);
 
   const handleExploreClick = () => {
     navigate('/explore');

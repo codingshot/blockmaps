@@ -19,18 +19,6 @@ const PrivyWrapper = ({ children }: PrivyWrapperProps) => {
         embeddedWallets: {
           createOnLogin: 'users-without-wallets',
         },
-        supportedChains: [
-          {
-            id: 1,
-            name: 'Ethereum',
-            network: 'homestead',
-            nativeCurrency: { name: 'Ether', symbol: 'ETH', decimals: 18 },
-            rpcUrls: {
-              default: { http: ['https://eth-mainnet.g.alchemy.com/v2/demo'] },
-              public: { http: ['https://eth-mainnet.g.alchemy.com/v2/demo'] },
-            },
-          },
-        ],
       }}
     >
       {children}
