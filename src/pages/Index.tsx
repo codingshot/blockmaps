@@ -1,7 +1,7 @@
 import { useEffect, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { usePrivy } from '@privy-io/react-auth';
-import { MapPin, Layers } from 'lucide-react';
+import { MapPin } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import CultureMap from '@/components/CultureMap';
 import AuthModal from '@/components/AuthModal';
@@ -97,34 +97,6 @@ const Index = () => {
           initialLocation={userLocation}
           availableCities={availableCities}
         />
-      </div>
-
-      {/* Layer Toggle Panel - Moved to bottom left */}
-      <div className="absolute left-4 bottom-4 z-40">
-        <div className="bg-white/95 backdrop-blur-md rounded-xl p-3 shadow-xl border border-white/20">
-          <div className="flex items-center space-x-2 mb-3">
-            <Layers className="w-4 h-4 text-purple-600" />
-            <span className="text-sm font-semibold bg-gradient-to-r from-blue-600 to-purple-600 bg-clip-text text-transparent">Layers</span>
-          </div>
-          <div className="space-y-2 text-xs">
-            <div className="flex items-center space-x-2">
-              <div className="w-3 h-3 bg-gradient-to-r from-red-400 to-red-500 rounded-full shadow-md"></div>
-              <span className="text-red-600 font-medium">Safety</span>
-            </div>
-            <div className="flex items-center space-x-2">
-              <div className="w-3 h-3 bg-gradient-to-r from-purple-400 to-purple-500 rounded-full shadow-md"></div>
-              <span className="text-purple-600 font-medium">Nightlife</span>
-            </div>
-            <div className="flex items-center space-x-2">
-              <div className="w-3 h-3 bg-gradient-to-r from-green-400 to-green-500 rounded-full shadow-md"></div>
-              <span className="text-green-600 font-medium">Local Food</span>
-            </div>
-            <div className="flex items-center space-x-2">
-              <div className="w-3 h-3 bg-gradient-to-r from-blue-400 to-blue-500 rounded-full shadow-md"></div>
-              <span className="text-blue-600 font-medium">Culture</span>
-            </div>
-          </div>
-        </div>
       </div>
 
       {/* Onboarding Modal */}
