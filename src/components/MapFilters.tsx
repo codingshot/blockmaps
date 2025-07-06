@@ -1,6 +1,6 @@
 
 import { useState } from 'react';
-import { Filter, X } from 'lucide-react';
+import { Filter, X, Minimize2, Maximize2 } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { ScrollArea } from '@/components/ui/scroll-area';
 
@@ -10,6 +10,8 @@ interface MapFiltersProps {
 }
 
 const MapFilters = ({ selectedFilters, onFiltersChange }: MapFiltersProps) => {
+  const [isMinimized, setIsMinimized] = useState(false);
+
   const allFilters = [
     // Safety & Security
     { id: 'crime-rate', label: 'Crime Rate', emoji: '🔥', category: 'Safety' },
@@ -69,8 +71,27 @@ const MapFilters = ({ selectedFilters, onFiltersChange }: MapFiltersProps) => {
     { id: 'authentic', emoji: '💎' },
   ];
 
+  // Minimized state - just show a small square with filter icon
+  if (isMinimized) {
+    return (
+      <div className="bg-white/95 backdrop-blur-md rounded-lg shadow-xl border border-white/20 mb-0">
+        <button
+          onClick={() => setIsMinimized(false)}
+          className="flex items-center justify-center p-3 hover:bg-gray-100 rounded-lg transition-colors"
+        >
+          <Filter className="w-5 h-5 text-gray-600" />
+          {selectedFilters.length > 0 && (
+            <span className="absolute -top-1 -right-1 bg-blue-500 text-white text-xs px-1.5 py-0.5 rounded-full min-w-[20px] h-5 flex items-center justify-center">
+              {selectedFilters.length}
+            </span>
+          )}
+        </button>
+      </div>
+    );
+  }
+
   return (
-    <div className="bg-white/95 backdrop-blur-md rounded-xl shadow-xl border border-white/20 w-80 max-w-sm">
+    <div className="bg-white/95 backdrop-blur-md rounded-xl shadow-xl border border-white/20 w-80 max-w-sm mb-0">
       {/* Header */}
       <div className="p-4 border-b border-gray-200">
         <div className="flex items-center justify-between mb-3">
@@ -83,6 +104,12 @@ const MapFilters = ({ selectedFilters, onFiltersChange }: MapFiltersProps) => {
               </span>
             )}
           </div>
+          <button
+            onClick={() => setIsMinimized(true)}
+            className="p-1 hover:bg-gray-100 rounded transition-colors"
+          >
+            <Minimize2 className="w-4 h-4 text-gray-600" />
+          </button>
         </div>
 
         {/* Quick Filters - Made thinner and more compact */}

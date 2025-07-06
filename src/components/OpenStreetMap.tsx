@@ -27,56 +27,105 @@ const OpenStreetMap = ({ center, zoom = 13, markers = [], onMapClick }: OpenStre
   const [isLoading, setIsLoading] = useState(true);
   const [mapInstance, setMapInstance] = useState<any>(null);
   const [error, setError] = useState<string | null>(null);
+  const markersRef = useRef<any[]>([]);
 
   useEffect(() => {
+    let mounted = true;
+    
     const initMap = async () => {
-      if (!mapRef.current) return;
+      if (!mapRef.current || !mounted) return;
 
       try {
         setIsLoading(true);
         setError(null);
+        console.log('Starting map initialization...');
 
-        // Load Leaflet if not already loaded
+        // Check if Leaflet is already loaded
         if (!window.L) {
-          // Add CSS
-          const cssLink = document.createElement('link');
-          cssLink.rel = 'stylesheet';
-          cssLink.href = 'https://unpkg.com/leaflet@1.9.4/dist/leaflet.css';
-          document.head.appendChild(cssLink);
+          console.log('Loading Leaflet CSS and JS...');
+          
+          // Load CSS first
+          const existingCss = document.querySelector('link[href*="leaflet.css"]');
+          if (!existingCss) {
+            const cssLink = document.createElement('link');
+            cssLink.rel = 'stylesheet';
+            cssLink.href = 'https://unpkg.com/leaflet@1.9.4/dist/leaflet.css';
+            cssLink.integrity = 'sha256-p4NxAoJBhIIN+hmNHrzRCf9tD/miZyoHS5obTRR9BMY=';
+            cssLink.crossOrigin = '';
+            document.head.appendChild(cssLink);
+          }
 
-          // Add JS
-          const script = document.createElement('script');
-          script.src = 'https://unpkg.com/leaflet@1.9.4/dist/leaflet.js';
-          document.body.appendChild(script);
+          // Load JS
+          const existingScript = document.querySelector('script[src*="leaflet.js"]');
+          if (!existingScript) {
+            await new Promise((resolve, reject) => {
+              const script = document.createElement('script');
+              script.src = 'https://unpkg.com/leaflet@1.9.4/dist/leaflet.js';
+              script.integrity = 'sha256-20nQCchB9co0qIjJZRGuk2/Z9VM+kNiyxNV1lvTlZBo=';
+              script.crossOrigin = '';
+              script.onload = () => {
+                console.log('Leaflet script loaded');
+                resolve(void 0);
+              };
+              script.onerror = () => {
+                console.error('Failed to load Leaflet script');
+                reject(new Error('Failed to load Leaflet'));
+              };
+              document.head.appendChild(script);
+            });
+          }
 
-          // Wait for script to load
-          await new Promise((resolve, reject) => {
-            script.onload = resolve;
-            script.onerror = reject;
-          });
+          // Wait for Leaflet to be available
+          let attempts = 0;
+          while (!window.L && attempts < 50) {
+            await new Promise(resolve => setTimeout(resolve, 100));
+            attempts++;
+          }
 
-          // Wait a bit more for Leaflet to initialize
-          await new Promise(resolve => setTimeout(resolve, 100));
+          if (!window.L) {
+            throw new Error('Leaflet failed to initialize after loading');
+          }
         }
 
-        if (!window.L) {
-          throw new Error('Leaflet failed to load');
+        if (!mounted) return;
+
+        console.log('Creating map instance...');
+        
+        // Clear any existing content
+        if (mapRef.current) {
+          mapRef.current.innerHTML = '';
         }
 
-        // Clear container
-        mapRef.current.innerHTML = '';
-
-        // Create map
-        const map = window.L.map(mapRef.current, {
-          center: [center.lat, center.lng],
+        // Create map with better error handling
+        const mapOptions = {
+          center: [center.lat, center.lng] as [number, number],
           zoom: zoom,
-          zoomControl: true
+          zoomControl: false, // We'll add our own controls
+          attributionControl: true,
+          scrollWheelZoom: true,
+          doubleClickZoom: true,
+          boxZoom: true,
+          keyboard: true,
+          dragging: true,
+          touchZoom: true
+        };
+
+        const map = window.L.map(mapRef.current, mapOptions);
+        
+        console.log('Map created, adding tile layer...');
+
+        // Add tile layer with error handling
+        const tileLayer = window.L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
+          attribution: '© <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> contributors',
+          maxZoom: 19,
+          subdomains: ['a', 'b', 'c']
         });
 
-        // Add tile layer
-        window.L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
-          attribution: '© OpenStreetMap contributors'
-        }).addTo(map);
+        tileLayer.on('tileerror', (e: any) => {
+          console.warn('Tile loading error:', e);
+        });
+
+        tileLayer.addTo(map);
 
         // Add click handler
         if (onMapClick) {
@@ -85,20 +134,24 @@ const OpenStreetMap = ({ center, zoom = 13, markers = [], onMapClick }: OpenStre
           });
         }
 
+        // Store map instance
         setMapInstance(map);
         setIsLoading(false);
-        console.log('Map loaded successfully');
+        console.log('Map loaded successfully!');
 
       } catch (err) {
         console.error('Map loading error:', err);
-        setError('Failed to load map');
-        setIsLoading(false);
+        if (mounted) {
+          setError(`Failed to load map: ${err instanceof Error ? err.message : 'Unknown error'}`);
+          setIsLoading(false);
+        }
       }
     };
 
     initMap();
 
     return () => {
+      mounted = false;
       if (mapInstance) {
         try {
           mapInstance.remove();
@@ -112,7 +165,11 @@ const OpenStreetMap = ({ center, zoom = 13, markers = [], onMapClick }: OpenStre
   // Update map view when center/zoom changes
   useEffect(() => {
     if (mapInstance && window.L) {
-      mapInstance.setView([center.lat, center.lng], zoom);
+      try {
+        mapInstance.setView([center.lat, center.lng], zoom);
+      } catch (e) {
+        console.warn('Error updating map view:', e);
+      }
     }
   }, [center.lat, center.lng, zoom, mapInstance]);
 
@@ -120,38 +177,48 @@ const OpenStreetMap = ({ center, zoom = 13, markers = [], onMapClick }: OpenStre
   useEffect(() => {
     if (!mapInstance || !window.L) return;
 
-    // Clear existing markers
-    mapInstance.eachLayer((layer: any) => {
-      if (layer instanceof window.L.Marker) {
-        mapInstance.removeLayer(layer);
-      }
-    });
+    try {
+      // Clear existing markers
+      markersRef.current.forEach(marker => {
+        try {
+          mapInstance.removeLayer(marker);
+        } catch (e) {
+          console.warn('Error removing marker:', e);
+        }
+      });
+      markersRef.current = [];
 
-    // Add new markers
-    markers.forEach((marker) => {
-      try {
-        const customIcon = window.L.divIcon({
-          className: 'custom-marker',
-          html: `<div class="marker-content">${marker.emoji}</div>`,
-          iconSize: [40, 40],
-          iconAnchor: [20, 20],
-        });
+      // Add new markers
+      markers.forEach((marker) => {
+        try {
+          const customIcon = window.L.divIcon({
+            className: 'custom-marker',
+            html: `<div class="marker-content">${marker.emoji}</div>`,
+            iconSize: [40, 40],
+            iconAnchor: [20, 20],
+          });
 
-        const markerInstance = window.L.marker([marker.lat, marker.lng], { 
-          icon: customIcon 
-        }).addTo(mapInstance);
-        
-        markerInstance.bindPopup(`
-          <div style="text-align: center; padding: 12px;">
-            <div style="font-size: 28px; margin-bottom: 8px;">${marker.emoji}</div>
-            <div style="font-weight: bold; margin-bottom: 6px;">${marker.label}</div>
-            <div style="font-size: 12px; color: #666;">${marker.type.replace('-', ' ')}</div>
-          </div>
-        `);
-      } catch (error) {
-        console.error('Error adding marker:', error);
-      }
-    });
+          const markerInstance = window.L.marker([marker.lat, marker.lng], { 
+            icon: customIcon 
+          });
+          
+          markerInstance.addTo(mapInstance);
+          markersRef.current.push(markerInstance);
+          
+          markerInstance.bindPopup(`
+            <div style="text-align: center; padding: 12px;">
+              <div style="font-size: 28px; margin-bottom: 8px;">${marker.emoji}</div>
+              <div style="font-weight: bold; margin-bottom: 6px;">${marker.label}</div>
+              <div style="font-size: 12px; color: #666;">${marker.type.replace('-', ' ')}</div>
+            </div>
+          `);
+        } catch (error) {
+          console.error('Error adding marker:', error);
+        }
+      });
+    } catch (e) {
+      console.error('Error updating markers:', e);
+    }
   }, [markers, mapInstance]);
 
   if (error) {
@@ -161,6 +228,12 @@ const OpenStreetMap = ({ center, zoom = 13, markers = [], onMapClick }: OpenStre
           <MapPin className="w-12 h-12 text-red-500 mx-auto mb-4" />
           <p className="text-red-600 font-semibold mb-2">Map Loading Error</p>
           <p className="text-gray-600 text-sm">{error}</p>
+          <button 
+            onClick={() => window.location.reload()} 
+            className="mt-4 px-4 py-2 bg-blue-500 text-white rounded hover:bg-blue-600"
+          >
+            Retry
+          </button>
         </div>
       </div>
     );
@@ -171,7 +244,8 @@ const OpenStreetMap = ({ center, zoom = 13, markers = [], onMapClick }: OpenStre
       <div className="w-full h-full flex items-center justify-center bg-gradient-to-br from-blue-50 to-purple-50">
         <div className="text-center p-6">
           <Loader className="w-10 h-10 animate-spin text-blue-500 mx-auto mb-4" />
-          <p className="text-gray-700 font-medium">Loading Map...</p>
+          <p className="text-gray-700 font-medium">Loading Interactive Map...</p>
+          <p className="text-gray-500 text-sm mt-2">This may take a moment</p>
         </div>
       </div>
     );
