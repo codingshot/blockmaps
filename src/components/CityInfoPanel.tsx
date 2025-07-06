@@ -19,7 +19,10 @@ const CityInfoPanel = ({ city }: CityInfoPanelProps) => {
     <div className="absolute top-4 left-4 z-40 bg-white/95 backdrop-blur-md rounded-xl p-4 shadow-xl border border-white/20 max-w-sm">
       <div className="flex items-center space-x-2">
         {city.countryFlag && <span className="text-2xl">{city.countryFlag}</span>}
-        <h3 className="font-bold text-gray-900 text-lg">{city.name}</h3>
+        <div className="flex items-baseline space-x-2">
+          <h3 className="font-bold text-gray-900 text-lg">{city.name}</h3>
+          {city.country && <span className="text-gray-600 text-sm font-normal">{city.country}</span>}
+        </div>
       </div>
     </div>
   );
