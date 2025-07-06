@@ -1,3 +1,4 @@
+
 import { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { Globe, Users, X } from 'lucide-react';
@@ -197,7 +198,7 @@ const Explore = () => {
       {/* Use consistent Navbar */}
       <Navbar />
 
-      <div className="container mx-auto px-4 py-6 sm:py-8 pt-20">
+      <div className="container mx-auto px-4 py-6 sm:py-8 pt-24">
         {/* Page Header - Mobile Optimized */}
         <div className="text-center mb-6 sm:mb-8">
           <h1 className="text-2xl sm:text-4xl font-bold mb-2 sm:mb-4 bg-gradient-to-r from-blue-600 via-purple-600 to-pink-600 bg-clip-text text-transparent">
@@ -237,7 +238,7 @@ const Explore = () => {
             </div>
           </div>
 
-          <div className="flex flex-wrap gap-2 mb-4">
+          <div className="flex flex-wrap gap-2 mb-4 justify-center">
             {filterOptions.map((filter) => (
               <button
                 key={filter.id}
@@ -255,15 +256,17 @@ const Explore = () => {
           </div>
           
           {(selectedFilters.length > 0 || searchQuery) && (
-            <Button
-              onClick={clearAllFilters}
-              variant="outline"
-              size="sm"
-              className="flex items-center space-x-2 text-gray-600 hover:text-gray-800"
-            >
-              <X className="w-4 h-4" />
-              <span>Clear All Filters</span>
-            </Button>
+            <div className="flex justify-center">
+              <Button
+                onClick={clearAllFilters}
+                variant="outline"
+                size="sm"
+                className="flex items-center space-x-2 text-gray-600 hover:text-gray-800"
+              >
+                <X className="w-4 h-4" />
+                <span>Clear All Filters</span>
+              </Button>
+            </div>
           )}
         </div>
 
