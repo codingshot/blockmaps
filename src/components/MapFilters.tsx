@@ -1,4 +1,3 @@
-
 import { useState } from 'react';
 import { Filter, X } from 'lucide-react';
 import { Button } from '@/components/ui/button';
@@ -85,8 +84,8 @@ const MapFilters = ({ selectedFilters, onFiltersChange }: MapFiltersProps) => {
           </div>
         </div>
 
-        {/* Quick Filters */}
-        <div className="flex flex-wrap gap-2 mb-3">
+        {/* Quick Filters - Made thinner and more compact */}
+        <div className="flex flex-wrap gap-1 mb-3">
           {quickFilters.map(filter => {
             const filterData = allFilters.find(f => f.id === filter.id);
             if (!filterData) return null;
@@ -95,14 +94,14 @@ const MapFilters = ({ selectedFilters, onFiltersChange }: MapFiltersProps) => {
               <button
                 key={filter.id}
                 onClick={() => toggleFilter(filter.id)}
-                className={`flex items-center space-x-1 px-2 py-1 rounded-full text-xs font-medium transition-all ${
+                className={`flex items-center space-x-1 px-2 py-0.5 rounded-full text-xs font-medium transition-all h-6 ${
                   selectedFilters.includes(filter.id)
                     ? 'bg-blue-500 text-white shadow-md'
                     : 'bg-gray-100 hover:bg-gray-200 text-gray-700'
                 }`}
               >
-                <span className="text-sm">{filter.emoji}</span>
-                <span className="hidden sm:inline">{filterData.label}</span>
+                <span className="text-xs">{filter.emoji}</span>
+                <span className="hidden sm:inline text-xs">{filterData.label}</span>
               </button>
             );
           })}
@@ -110,15 +109,17 @@ const MapFilters = ({ selectedFilters, onFiltersChange }: MapFiltersProps) => {
 
         {/* Clear Filters Button */}
         {selectedFilters.length > 0 && (
-          <Button
-            onClick={clearAll}
-            variant="outline"
-            size="sm"
-            className="w-full flex items-center justify-center space-x-2 text-xs"
-          >
-            <X className="w-3 h-3" />
-            <span>Clear All ({selectedFilters.length})</span>
-          </Button>
+          <div className="flex justify-center">
+            <Button
+              onClick={clearAll}
+              variant="outline"
+              size="sm"
+              className="flex items-center justify-center space-x-2 text-xs h-7"
+            >
+              <X className="w-3 h-3" />
+              <span>Clear All ({selectedFilters.length})</span>
+            </Button>
+          </div>
         )}
       </div>
 
@@ -128,19 +129,19 @@ const MapFilters = ({ selectedFilters, onFiltersChange }: MapFiltersProps) => {
           {categories.map(category => (
             <div key={category} className="space-y-2">
               <h4 className="text-sm font-semibold text-gray-700">{category}</h4>
-              <div className="grid grid-cols-1 gap-2">
+              <div className="flex flex-wrap gap-1">
                 {allFilters.filter(f => f.category === category).map(filter => (
                   <button
                     key={filter.id}
                     onClick={() => toggleFilter(filter.id)}
-                    className={`flex items-center space-x-2 p-2 rounded-lg text-xs font-medium transition-all ${
+                    className={`flex items-center space-x-1 px-2 py-0.5 rounded-full text-xs font-medium transition-all h-6 ${
                       selectedFilters.includes(filter.id)
                         ? 'bg-blue-500 text-white shadow-md'
                         : 'bg-gray-50 hover:bg-gray-100 text-gray-700 border border-gray-200'
                     }`}
                   >
-                    <span className="text-sm">{filter.emoji}</span>
-                    <span className="truncate">{filter.label}</span>
+                    <span className="text-xs">{filter.emoji}</span>
+                    <span className="text-xs">{filter.label}</span>
                   </button>
                 ))}
               </div>
