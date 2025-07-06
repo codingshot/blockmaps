@@ -7,6 +7,8 @@ import { BrowserRouter, Routes, Route } from "react-router-dom";
 import PrivyWrapper from "./components/PrivyProvider";
 import Index from "./pages/Index";
 import Explore from "./pages/Explore";
+import Docs from "./pages/Docs";
+import CityMap from "./pages/CityMap";
 import NotFound from "./pages/NotFound";
 
 const queryClient = new QueryClient();
@@ -21,6 +23,8 @@ const App = () => (
           <Routes>
             <Route path="/" element={<Index />} />
             <Route path="/explore" element={<Explore />} />
+            <Route path="/docs" element={<Docs />} />
+            <Route path="/map/:cityName" element={<CityMap />} />
             {/* ADD ALL CUSTOM ROUTES ABOVE THE CATCH-ALL "*" ROUTE */}
             <Route path="*" element={<NotFound />} />
           </Routes>

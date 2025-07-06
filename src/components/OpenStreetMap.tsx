@@ -38,37 +38,34 @@ const OpenStreetMap = ({ center, zoom = 13, markers = [], onMapClick }: OpenStre
         console.log('Starting map initialization...');
         console.log('Center coordinates:', center);
         
-        // Wait for container to be ready
-        let attempts = 0;
-        const maxAttempts = 10;
-        
-        while (attempts < maxAttempts) {
-          const container = mapRef.current;
-          if (container && container.offsetWidth > 0 && container.offsetHeight > 0) {
-            console.log('Container found and has dimensions:', {
-              width: container.offsetWidth,
-              height: container.offsetHeight
-            });
-            break;
-          }
-          
-          console.log(`Container not ready, attempt ${attempts + 1}/${maxAttempts}`);
-          await new Promise(resolve => setTimeout(resolve, 100));
-          attempts++;
-        }
-
+        // Ensure container exists and is visible
         const container = mapRef.current;
         if (!container) {
           throw new Error('Map container element not found');
         }
 
-        if (container.offsetWidth === 0 || container.offsetHeight === 0) {
-          console.log('Forcing container dimensions...');
-          container.style.width = '100%';
-          container.style.height = '400px';
-          container.style.display = 'block';
-          await new Promise(resolve => setTimeout(resolve, 100));
-        }
+        // Force container to have dimensions
+        container.style.width = '100%';
+        container.style.height = '100%';
+        container.style.minHeight = '400px';
+        container.style.display = 'block';
+        container.style.position = 'relative';
+
+        // Wait for container to be properly sized
+        await new Promise(resolve => {
+          const checkSize = () => {
+            if (container.offsetWidth > 0 && container.offsetHeight > 0) {
+              console.log('Container ready with dimensions:', {
+                width: container.offsetWidth,
+                height: container.offsetHeight
+              });
+              resolve(true);
+            } else {
+              setTimeout(checkSize, 50);
+            }
+          };
+          checkSize();
+        });
 
         console.log('Loading Leaflet...');
         
@@ -145,12 +142,11 @@ const OpenStreetMap = ({ center, zoom = 13, markers = [], onMapClick }: OpenStre
       }
     };
 
-    // Start initialization with a delay to ensure DOM is ready
-    const timer = setTimeout(initializeMap, 100);
+    // Start initialization immediately
+    initializeMap();
 
     return () => {
       mounted = false;
-      clearTimeout(timer);
       if (leafletMap) {
         try {
           console.log('Cleaning up map instance...');
@@ -160,7 +156,15 @@ const OpenStreetMap = ({ center, zoom = 13, markers = [], onMapClick }: OpenStre
         }
       }
     };
-  }, [center.lat, center.lng, zoom, onMapClick]);
+  }, []);
+
+  // Update map center and zoom when props change
+  useEffect(() => {
+    if (mapInstance && leafletRef.current) {
+      console.log('Updating map center to:', center, 'zoom:', zoom);
+      mapInstance.setView([center.lat, center.lng], zoom);
+    }
+  }, [center.lat, center.lng, zoom, mapInstance]);
 
   // Handle markers
   useEffect(() => {

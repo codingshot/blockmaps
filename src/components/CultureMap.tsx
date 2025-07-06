@@ -1,4 +1,3 @@
-
 import { useState } from 'react';
 import { MapPin, Users, Shield, Heart, Plus, User } from 'lucide-react';
 import { usePrivy } from '@privy-io/react-auth';
@@ -6,6 +5,8 @@ import OpenStreetMap from './OpenStreetMap';
 import AddPointForm from './AddPointForm';
 import AuthModal from './AuthModal';
 import UserDashboard from './UserDashboard';
+import MapSearch from './MapSearch';
+import MapZoomControls from './MapZoomControls';
 import { Button } from '@/components/ui/button';
 import { useSmartContracts } from '@/utils/smartContracts';
 
@@ -23,7 +24,8 @@ interface CultureMapProps {
 const CultureMap = ({ initialLocation, availableCities }: CultureMapProps) => {
   // Always use Cannes as default - this ensures the map loads
   const defaultLocation = { lat: 43.5528, lng: 7.0174 };
-  const mapCenter = initialLocation || defaultLocation;
+  const [mapCenter, setMapCenter] = useState(initialLocation || defaultLocation);
+  const [mapZoom, setMapZoom] = useState(13);
 
   console.log('CultureMap rendering with center:', mapCenter);
 
@@ -203,6 +205,20 @@ const CultureMap = ({ initialLocation, availableCities }: CultureMapProps) => {
     alert('Click anywhere on the map to add a culture point!');
   };
 
+  const handleLocationSelect = (lat: number, lng: number, name: string) => {
+    setMapCenter({ lat, lng });
+    setMapZoom(16);
+    console.log('Location selected:', { lat, lng, name });
+  };
+
+  const handleZoomIn = () => {
+    setMapZoom(prev => Math.min(prev + 1, 19));
+  };
+
+  const handleZoomOut = () => {
+    setMapZoom(prev => Math.max(prev - 1, 1));
+  };
+
   // Helper function to get user display info with ninja emoji
   const getUserDisplayInfo = () => {
     if (!user) return { initial: '👤', display: 'Connected' };
@@ -223,10 +239,20 @@ const CultureMap = ({ initialLocation, availableCities }: CultureMapProps) => {
       {/* OpenStreetMap - Always render with valid coordinates */}
       <OpenStreetMap
         center={mapCenter}
-        zoom={13}
+        zoom={mapZoom}
         markers={filteredMarkers}
         onMapClick={handleMapClick}
       />
+
+      {/* Search Bar */}
+      <div className="absolute top-4 left-4 z-30">
+        <MapSearch onLocationSelect={handleLocationSelect} />
+      </div>
+
+      {/* Zoom Controls */}
+      <div className="absolute top-4 right-4 z-30">
+        <MapZoomControls onZoomIn={handleZoomIn} onZoomOut={handleZoomOut} />
+      </div>
 
       {/* Layer Controls - Enhanced with categories */}
       <div className="absolute bottom-4 sm:bottom-6 left-2 sm:left-6 z-30 max-w-xs">
@@ -287,7 +313,7 @@ const CultureMap = ({ initialLocation, availableCities }: CultureMapProps) => {
       </div>
 
       {/* Current Location Info - Condensed and Mobile Responsive */}
-      <div className="absolute top-2 sm:top-20 left-2 sm:left-6 right-20 sm:right-auto z-30 max-w-xs">
+      <div className="absolute top-16 left-2 sm:left-6 right-20 sm:right-auto z-30 max-w-xs">
         <div className="bg-white/90 backdrop-blur-sm rounded-xl p-2 sm:p-3 shadow-lg border border-white/20">
           <div className="flex items-center space-x-2">
             <div className="w-8 h-8 sm:w-10 sm:h-10 bg-gradient-to-r from-blue-500 to-purple-600 rounded-full flex items-center justify-center flex-shrink-0">
@@ -323,7 +349,7 @@ const CultureMap = ({ initialLocation, availableCities }: CultureMapProps) => {
 
       {/* User Info */}
       {ready && authenticated && user && (
-        <div className="absolute top-2 right-2 sm:top-6 sm:right-6 z-30">
+        <div className="absolute top-16 right-2 sm:right-6 z-30">
           <Button
             variant="ghost"
             onClick={() => setShowUserDashboard(true)}
