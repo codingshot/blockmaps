@@ -1,3 +1,4 @@
+
 import { useEffect, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { usePrivy } from '@privy-io/react-auth';
@@ -78,10 +79,21 @@ const Index = () => {
 
   if (isLoadingLocation) {
     return (
-      <div className="min-h-screen flex items-center justify-center bg-gradient-to-br from-blue-50 to-purple-50">
+      <div className="min-h-screen flex items-center justify-center bg-gradient-to-br from-blue-100 via-purple-50 to-pink-100">
         <div className="text-center">
-          <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-blue-500 mx-auto mb-4"></div>
-          <p className="text-lg text-gray-600">Mapping your culture...</p>
+          <div className="relative">
+            <div className="animate-spin rounded-full h-20 w-20 border-4 border-transparent border-t-blue-500 border-r-purple-500 border-b-pink-500 border-l-green-500 mx-auto mb-4"></div>
+            <div className="absolute inset-0 flex items-center justify-center">
+              <img 
+                src="/lovable-uploads/c685a2ad-a3fd-49c6-9887-8b20a1c7f5ee.png" 
+                alt="Blockmaps Logo" 
+                className="w-10 h-10 object-contain"
+              />
+            </div>
+          </div>
+          <p className="text-lg font-semibold bg-gradient-to-r from-blue-600 via-purple-600 to-pink-600 bg-clip-text text-transparent">
+            Mapping your culture...
+          </p>
         </div>
       </div>
     );
@@ -90,7 +102,7 @@ const Index = () => {
   return (
     <div className="relative min-h-screen overflow-hidden">
       {/* Header */}
-      <header className="absolute top-0 left-0 right-0 z-50 bg-white/90 backdrop-blur-sm border-b border-white/20">
+      <header className="absolute top-0 left-0 right-0 z-50 bg-white/95 backdrop-blur-md border-b border-gradient-to-r from-blue-200/30 via-purple-200/30 to-pink-200/30 shadow-lg">
         <div className="container mx-auto px-4 py-3 flex items-center justify-between">
           <div className="flex items-center space-x-2">
             <div className="w-8 h-8 flex items-center justify-center">
@@ -101,10 +113,10 @@ const Index = () => {
               />
             </div>
             <div>
-              <h1 className="text-xl font-bold bg-gradient-to-r from-blue-600 to-purple-600 bg-clip-text text-transparent">
+              <h1 className="text-xl font-bold bg-gradient-to-r from-blue-600 via-purple-600 to-pink-600 bg-clip-text text-transparent">
                 blockmaps
               </h1>
-              <p className="text-xs text-gray-500">culture mapped live</p>
+              <p className="text-xs bg-gradient-to-r from-green-600 to-orange-600 bg-clip-text text-transparent font-medium">culture mapped live</p>
             </div>
           </div>
           
@@ -112,7 +124,7 @@ const Index = () => {
             onClick={handleExploreClick}
             variant="outline" 
             size="sm"
-            className="flex items-center space-x-2 hover:bg-blue-50"
+            className="flex items-center space-x-2 border-2 border-gradient-to-r from-blue-400 to-purple-400 hover:bg-gradient-to-r hover:from-blue-50 hover:to-purple-50 text-blue-600 hover:text-purple-600 transition-all duration-300"
           >
             <Search className="w-4 h-4" />
             <span className="hidden sm:inline">Explore All Maps</span>
@@ -131,27 +143,27 @@ const Index = () => {
 
       {/* Layer Toggle Panel - Mobile Responsive */}
       <div className="absolute right-2 sm:right-4 top-20 sm:top-24 z-40">
-        <div className="bg-white/90 backdrop-blur-sm rounded-xl p-2 sm:p-3 shadow-lg border border-white/20">
+        <div className="bg-white/95 backdrop-blur-md rounded-xl p-2 sm:p-3 shadow-xl border border-gradient-to-br from-blue-200/50 via-purple-200/50 to-pink-200/50">
           <div className="flex items-center space-x-2 mb-2 sm:mb-3">
-            <Layers className="w-3 h-3 sm:w-4 sm:h-4 text-blue-600" />
-            <span className="text-xs sm:text-sm font-medium">Layers</span>
+            <Layers className="w-3 h-3 sm:w-4 sm:h-4 text-purple-600" />
+            <span className="text-xs sm:text-sm font-semibold bg-gradient-to-r from-blue-600 to-purple-600 bg-clip-text text-transparent">Layers</span>
           </div>
           <div className="space-y-1 sm:space-y-2 text-xs">
             <div className="flex items-center space-x-2">
-              <div className="w-2 h-2 sm:w-3 sm:h-3 bg-red-400 rounded-full"></div>
-              <span>Safety</span>
+              <div className="w-2 h-2 sm:w-3 sm:h-3 bg-gradient-to-r from-red-400 to-red-500 rounded-full shadow-md"></div>
+              <span className="text-red-600 font-medium">Safety</span>
             </div>
             <div className="flex items-center space-x-2">
-              <div className="w-2 h-2 sm:w-3 sm:h-3 bg-purple-400 rounded-full"></div>
-              <span>Nightlife</span>
+              <div className="w-2 h-2 sm:w-3 sm:h-3 bg-gradient-to-r from-purple-400 to-purple-500 rounded-full shadow-md"></div>
+              <span className="text-purple-600 font-medium">Nightlife</span>
             </div>
             <div className="flex items-center space-x-2">
-              <div className="w-2 h-2 sm:w-3 sm:h-3 bg-green-400 rounded-full"></div>
-              <span>Local Food</span>
+              <div className="w-2 h-2 sm:w-3 sm:h-3 bg-gradient-to-r from-green-400 to-green-500 rounded-full shadow-md"></div>
+              <span className="text-green-600 font-medium">Local Food</span>
             </div>
             <div className="flex items-center space-x-2">
-              <div className="w-2 h-2 sm:w-3 sm:h-3 bg-blue-400 rounded-full"></div>
-              <span>Culture</span>
+              <div className="w-2 h-2 sm:w-3 sm:h-3 bg-gradient-to-r from-blue-400 to-blue-500 rounded-full shadow-md"></div>
+              <span className="text-blue-600 font-medium">Culture</span>
             </div>
           </div>
         </div>
@@ -160,29 +172,29 @@ const Index = () => {
       {/* Onboarding Modal */}
       {showOnboarding && ready && authenticated && (
         <div className="absolute inset-0 bg-black/50 backdrop-blur-sm z-50 flex items-center justify-center p-4">
-          <div className="bg-white rounded-2xl p-6 sm:p-8 max-w-md w-full text-center">
+          <div className="bg-white rounded-2xl p-6 sm:p-8 max-w-md w-full text-center shadow-2xl border border-gradient-to-br from-blue-200/50 via-purple-200/50 to-pink-200/50">
             <div className="mb-6">
-              <div className="w-16 h-16 bg-gradient-to-r from-blue-500 to-purple-600 rounded-full flex items-center justify-center mx-auto mb-4">
+              <div className="w-16 h-16 bg-gradient-to-br from-blue-500 via-purple-500 to-pink-500 rounded-full flex items-center justify-center mx-auto mb-4 shadow-lg">
                 <img 
                   src="/lovable-uploads/c685a2ad-a3fd-49c6-9887-8b20a1c7f5ee.png" 
                   alt="Blockmaps Logo" 
                   className="w-12 h-12 object-contain"
                 />
               </div>
-              <h2 className="text-xl sm:text-2xl font-bold mb-2">Welcome to Blockmaps</h2>
+              <h2 className="text-xl sm:text-2xl font-bold mb-2 bg-gradient-to-r from-blue-600 via-purple-600 to-pink-600 bg-clip-text text-transparent">Welcome to Blockmaps</h2>
               <p className="text-sm sm:text-base text-gray-600">Discover authentic neighborhood culture through community-mapped insights</p>
             </div>
             
             <div className="space-y-4">
               <Button 
-                className="w-full bg-gradient-to-r from-blue-500 to-purple-600 hover:from-blue-600 hover:to-purple-700"
+                className="w-full bg-gradient-to-r from-blue-500 via-purple-500 to-pink-500 hover:from-blue-600 hover:via-purple-600 hover:to-pink-600 text-white shadow-lg hover:shadow-xl transition-all duration-300"
                 onClick={() => setShowOnboarding(false)}
               >
                 Start Exploring
               </Button>
               <Button 
                 variant="outline" 
-                className="w-full"
+                className="w-full border-2 border-gradient-to-r from-blue-400 to-purple-400 text-blue-600 hover:bg-gradient-to-r hover:from-blue-50 hover:to-purple-50 transition-all duration-300"
                 onClick={handleExploreClick}
               >
                 View All Cities
@@ -200,10 +212,10 @@ const Index = () => {
 
       {/* Quick Action Buttons - Mobile Responsive */}
       <div className="absolute bottom-4 sm:bottom-6 right-4 sm:right-6 z-40 space-y-3">
-        <div className="bg-white/90 backdrop-blur-sm rounded-full p-2 sm:p-3 shadow-lg cursor-pointer hover:bg-white transition-colors">
+        <div className="bg-gradient-to-br from-orange-400 to-red-500 backdrop-blur-sm rounded-full p-2 sm:p-3 shadow-xl cursor-pointer hover:shadow-2xl hover:scale-110 transition-all duration-300">
           <span className="text-xl sm:text-2xl">📍</span>
         </div>
-        <div className="bg-white/90 backdrop-blur-sm rounded-full p-2 sm:p-3 shadow-lg cursor-pointer hover:bg-white transition-colors">
+        <div className="bg-gradient-to-br from-green-400 to-blue-500 backdrop-blur-sm rounded-full p-2 sm:p-3 shadow-xl cursor-pointer hover:shadow-2xl hover:scale-110 transition-all duration-300">
           <span className="text-xl sm:text-2xl">➕</span>
         </div>
       </div>
