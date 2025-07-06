@@ -1,14 +1,16 @@
 import { useState } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
-import { ArrowLeft, MapPin, Filter, Search, Globe, Users, Shield, Heart } from 'lucide-react';
+import { ArrowLeft, MapPin, Filter, Search, Globe, Users, Shield, Heart, X } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
+import AdvancedFiltersModal from '@/components/AdvancedFiltersModal';
 
 const Explore = () => {
   const navigate = useNavigate();
   const [selectedFilters, setSelectedFilters] = useState<string[]>([]);
   const [searchQuery, setSearchQuery] = useState('');
   const [showFilters, setShowFilters] = useState(false);
+  const [showAdvancedFilters, setShowAdvancedFilters] = useState(false);
 
   // Real culture data from Cannes (matching CultureMap.tsx)
   const cannesCultureData = [
@@ -161,6 +163,11 @@ const Explore = () => {
     );
   };
 
+  const clearAllFilters = () => {
+    setSelectedFilters([]);
+    setSearchQuery('');
+  };
+
   const filteredCities = cities.filter(city => {
     // Search filter
     if (searchQuery && !city.name.toLowerCase().includes(searchQuery.toLowerCase()) && 
@@ -267,7 +274,12 @@ const Explore = () => {
               <Filter className="w-4 h-4" />
               <span>Filters</span>
             </Button>
-            <Button variant="outline" size="lg" className="hidden sm:flex items-center space-x-2">
+            <Button 
+              variant="outline" 
+              size="lg" 
+              onClick={() => setShowAdvancedFilters(true)}
+              className="hidden sm:flex items-center space-x-2"
+            >
               <Filter className="w-5 h-5" />
               <span>Advanced Filters</span>
             </Button>
@@ -275,7 +287,7 @@ const Explore = () => {
 
           {/* Filter Tags - Mobile Responsive */}
           <div className={`${showFilters ? 'block' : 'hidden'} sm:block`}>
-            <div className="flex flex-wrap gap-2">
+            <div className="flex flex-wrap gap-2 mb-4">
               {filterOptions.map((filter) => (
                 <button
                   key={filter.id}
@@ -291,6 +303,19 @@ const Explore = () => {
                 </button>
               ))}
             </div>
+            
+            {/* Clear Filters Button */}
+            {(selectedFilters.length > 0 || searchQuery) && (
+              <Button
+                onClick={clearAllFilters}
+                variant="outline"
+                size="sm"
+                className="flex items-center space-x-2 text-gray-600 hover:text-gray-800"
+              >
+                <X className="w-4 h-4" />
+                <span>Clear All Filters</span>
+              </Button>
+            )}
           </div>
         </div>
 
@@ -391,7 +416,15 @@ const Explore = () => {
           <div className="text-center py-12">
             <Globe className="w-12 h-12 sm:w-16 sm:h-16 text-gray-300 mx-auto mb-4" />
             <h3 className="text-lg sm:text-xl font-semibold text-gray-600 mb-2">No cities found</h3>
-            <p className="text-gray-500 text-sm sm:text-base">Try adjusting your search or filters</p>
+            <p className="text-gray-500 text-sm sm:text-base mb-4">Try adjusting your search or filters</p>
+            <Button 
+              onClick={clearAllFilters}
+              variant="outline"
+              className="flex items-center space-x-2"
+            >
+              <X className="w-4 h-4" />
+              <span>Clear Filters</span>
+            </Button>
           </div>
         )}
 
@@ -404,6 +437,14 @@ const Explore = () => {
           </Button>
         </div>
       </div>
+
+      {/* Advanced Filters Modal */}
+      <AdvancedFiltersModal
+        isOpen={showAdvancedFilters}
+        onClose={() => setShowAdvancedFilters(false)}
+        selectedFilters={selectedFilters}
+        onFiltersChange={setSelectedFilters}
+      />
     </div>
   );
 };
