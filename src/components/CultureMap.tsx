@@ -1,4 +1,3 @@
-
 import React, { useState, useEffect, useCallback } from 'react';
 import OpenStreetMap from '@/components/OpenStreetMap';
 import MapZoomControls from '@/components/MapZoomControls';
@@ -150,11 +149,6 @@ const CultureMap = ({ initialLocation, availableCities }: CultureMapProps) => {
         </Button>
       </div>
 
-      {/* Zoom Controls - Positioned to avoid overlap */}
-      <div className="absolute bottom-4 right-4 z-40">
-        <MapZoomControls onZoomIn={handleZoomIn} onZoomOut={handleZoomOut} />
-      </div>
-
       {/* City Info Panel - Positioned in top-left without overlap */}
       <div className="absolute top-4 left-4 z-40">
         <CityInfoPanel 
@@ -173,6 +167,11 @@ const CultureMap = ({ initialLocation, availableCities }: CultureMapProps) => {
         selectedFilters={selectedFilters}
         onFiltersChange={setSelectedFilters}
       />
+
+      {/* Zoom Controls - Positioned underneath map filters in bottom-right */}
+      <div className="absolute bottom-4 right-4 z-40">
+        <MapZoomControls onZoomIn={handleZoomIn} onZoomOut={handleZoomOut} />
+      </div>
 
       {/* OpenStreetMap Component */}
       <div className="absolute inset-0 z-10">
