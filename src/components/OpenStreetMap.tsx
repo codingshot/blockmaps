@@ -1,5 +1,4 @@
-
-import { useEffect, useRef, useState } from 'react';
+import { useEffect, useRef, useState, forwardRef, useImperativeHandle } from 'react';
 import { MapPin, Loader } from 'lucide-react';
 
 interface OpenStreetMapProps {
@@ -16,7 +15,7 @@ interface OpenStreetMapProps {
   onMapClick?: (lat: number, lng: number) => void;
 }
 
-const OpenStreetMap = ({ center, zoom = 13, markers = [], onMapClick }: OpenStreetMapProps) => {
+const OpenStreetMap = forwardRef<any, OpenStreetMapProps>(({ center, zoom = 13, markers = [], onMapClick }, ref) => {
   const mapRef = useRef<HTMLDivElement>(null);
   const [isLoading, setIsLoading] = useState(true);
   const [mapInstance, setMapInstance] = useState<any>(null);
@@ -25,8 +24,11 @@ const OpenStreetMap = ({ center, zoom = 13, markers = [], onMapClick }: OpenStre
   const leafletRef = useRef<any>(null);
   const initializationRef = useRef<boolean>(false);
 
+  useImperativeHandle(ref, () => ({
+    getMapInstance: () => mapInstance
+  }));
+
   useEffect(() => {
-    // Prevent multiple initializations
     if (initializationRef.current) return;
     initializationRef.current = true;
 
@@ -36,29 +38,21 @@ const OpenStreetMap = ({ center, zoom = 13, markers = [], onMapClick }: OpenStre
     const initializeMap = async () => {
       try {
         console.log('Starting map initialization...');
-        console.log('Center coordinates:', center);
         
-        // Ensure container exists and is visible
         const container = mapRef.current;
         if (!container) {
           throw new Error('Map container element not found');
         }
 
-        // Force container to have dimensions
         container.style.width = '100%';
         container.style.height = '100%';
         container.style.minHeight = '400px';
         container.style.display = 'block';
         container.style.position = 'relative';
 
-        // Wait for container to be properly sized
         await new Promise(resolve => {
           const checkSize = () => {
             if (container.offsetWidth > 0 && container.offsetHeight > 0) {
-              console.log('Container ready with dimensions:', {
-                width: container.offsetWidth,
-                height: container.offsetHeight
-              });
               resolve(true);
             } else {
               setTimeout(checkSize, 50);
@@ -67,9 +61,6 @@ const OpenStreetMap = ({ center, zoom = 13, markers = [], onMapClick }: OpenStre
           checkSize();
         });
 
-        console.log('Loading Leaflet...');
-        
-        // Import Leaflet dynamically
         const [leafletModule] = await Promise.all([
           import('leaflet'),
           import('leaflet/dist/leaflet.css')
@@ -78,14 +69,8 @@ const OpenStreetMap = ({ center, zoom = 13, markers = [], onMapClick }: OpenStre
         const L = leafletModule.default;
         leafletRef.current = L;
 
-        if (!mounted) {
-          console.log('Component unmounted, aborting...');
-          return;
-        }
+        if (!mounted) return;
 
-        console.log('Fixing Leaflet icons...');
-
-        // Fix default marker icons
         delete (L.Icon.Default.prototype as any)._getIconUrl;
         L.Icon.Default.mergeOptions({
           iconRetinaUrl: 'https://cdnjs.cloudflare.com/ajax/libs/leaflet/1.9.4/images/marker-icon-2x.png',
@@ -93,9 +78,6 @@ const OpenStreetMap = ({ center, zoom = 13, markers = [], onMapClick }: OpenStre
           shadowUrl: 'https://cdnjs.cloudflare.com/ajax/libs/leaflet/1.9.4/images/marker-shadow.png',
         });
 
-        console.log('Creating Leaflet map instance...');
-
-        // Create the map
         leafletMap = L.map(container, {
           center: [center.lat, center.lng],
           zoom: zoom,
@@ -103,9 +85,6 @@ const OpenStreetMap = ({ center, zoom = 13, markers = [], onMapClick }: OpenStre
           attributionControl: true,
         });
 
-        console.log('Map instance created, adding tile layer...');
-
-        // Add OpenStreetMap tiles
         const tileLayer = L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
           attribution: '© OpenStreetMap contributors',
           maxZoom: 19,
@@ -113,21 +92,15 @@ const OpenStreetMap = ({ center, zoom = 13, markers = [], onMapClick }: OpenStre
 
         tileLayer.addTo(leafletMap);
 
-        console.log('Tile layer added, setting up click handler...');
-
-        // Add click handler
         if (onMapClick) {
           leafletMap.on('click', (e: any) => {
-            console.log('Map clicked at:', e.latlng);
             onMapClick(e.latlng.lat, e.latlng.lng);
           });
         }
 
-        // Wait for tiles to load
         await new Promise(resolve => setTimeout(resolve, 500));
 
         if (mounted) {
-          console.log('Map initialization complete!');
           setMapInstance(leafletMap);
           setIsLoading(false);
           setError(null);
@@ -142,14 +115,12 @@ const OpenStreetMap = ({ center, zoom = 13, markers = [], onMapClick }: OpenStre
       }
     };
 
-    // Start initialization immediately
     initializeMap();
 
     return () => {
       mounted = false;
       if (leafletMap) {
         try {
-          console.log('Cleaning up map instance...');
           leafletMap.remove();
         } catch (e) {
           console.warn('Error cleaning up map:', e);
@@ -158,7 +129,6 @@ const OpenStreetMap = ({ center, zoom = 13, markers = [], onMapClick }: OpenStre
     };
   }, []);
 
-  // Update map center and zoom when props change
   useEffect(() => {
     if (mapInstance && leafletRef.current) {
       console.log('Updating map center to:', center, 'zoom:', zoom);
@@ -166,7 +136,6 @@ const OpenStreetMap = ({ center, zoom = 13, markers = [], onMapClick }: OpenStre
     }
   }, [center.lat, center.lng, zoom, mapInstance]);
 
-  // Handle markers
   useEffect(() => {
     if (!mapInstance || !leafletRef.current || !markers.length) {
       return;
@@ -174,7 +143,6 @@ const OpenStreetMap = ({ center, zoom = 13, markers = [], onMapClick }: OpenStre
 
     console.log('Adding markers:', markers.length);
 
-    // Clear existing markers
     markersRef.current.forEach(marker => {
       try {
         mapInstance.removeLayer(marker);
@@ -184,7 +152,6 @@ const OpenStreetMap = ({ center, zoom = 13, markers = [], onMapClick }: OpenStre
     });
     markersRef.current = [];
 
-    // Add new markers
     markers.forEach((marker) => {
       try {
         const L = leafletRef.current;
@@ -267,6 +234,8 @@ const OpenStreetMap = ({ center, zoom = 13, markers = [], onMapClick }: OpenStre
       />
     </div>
   );
-};
+});
+
+OpenStreetMap.displayName = 'OpenStreetMap';
 
 export default OpenStreetMap;

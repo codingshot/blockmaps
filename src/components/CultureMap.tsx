@@ -1,9 +1,11 @@
-import React, { useState, useEffect, useRef, useCallback } from 'react';
+
+import React, { useState, useEffect, useCallback } from 'react';
 import OpenStreetMap from '@/components/OpenStreetMap';
 import MapZoomControls from '@/components/MapZoomControls';
 import { Input } from '@/components/ui/input';
-import { Search } from 'lucide-react';
+import { Search, Plus } from 'lucide-react';
 import CityInfoPanel from './CityInfoPanel';
+import { Button } from '@/components/ui/button';
 
 interface CultureMapProps {
   initialLocation: { lat: number; lng: number } | null;
@@ -22,9 +24,9 @@ const CultureMap = ({ initialLocation, availableCities }: CultureMapProps) => {
   const [searchQuery, setSearchQuery] = useState('');
   const [cultureData, setCultureData] = useState<any[]>([]);
   const [visibleMarkers, setVisibleMarkers] = useState<any[]>([]);
-  const mapRef = useRef<OpenStreetMap | null>(null);
+  const [showAddPointForm, setShowAddPointForm] = useState(false);
 
-  // Mock data for Cannes (matching Explore.tsx)
+  // Complete culture data for Cannes
   const cannesCultureData = [
     // Safety & Security
     { id: '1', emoji: '🔥', type: 'crime-rate', lat: 43.5515, lng: 7.0173, label: 'Crime Rate Heatmap' },
@@ -81,8 +83,8 @@ const CultureMap = ({ initialLocation, availableCities }: CultureMapProps) => {
   }, [initialLocation]);
 
   useEffect(() => {
-    // Load culture data based on the currently selected city
     setCultureData(cannesCultureData);
+    setVisibleMarkers(cannesCultureData);
   }, []);
 
   const handleZoomIn = () => {
@@ -95,30 +97,13 @@ const CultureMap = ({ initialLocation, availableCities }: CultureMapProps) => {
 
   const handleMapClick = useCallback((lat: number, lng: number) => {
     console.log('Map clicked at:', lat, lng);
+    // Could open add point form here
   }, []);
 
   const handleSearch = () => {
-    // Implement search functionality to pan to the searched location
     console.log('Searching for:', searchQuery);
+    // Implement search functionality
   };
-
-  // Update visible markers based on zoom level and map bounds
-  useEffect(() => {
-    const calculateVisibleMarkers = () => {
-      if (!mapRef.current) return [];
-
-      // Example logic: show all markers within a certain distance
-      return cultureData.filter(marker => {
-        const distance = Math.sqrt(
-          Math.pow(marker.lat - mapCenter.lat, 2) +
-          Math.pow(marker.lng - mapCenter.lng, 2)
-        );
-        return distance < 0.1; // Adjust threshold as needed
-      });
-    };
-
-    setVisibleMarkers(calculateVisibleMarkers());
-  }, [cultureData, mapCenter]);
 
   const currentCity = availableCities.find(city => 
     Math.abs(city.coordinates.lat - mapCenter.lat) < 0.01 && 
@@ -127,15 +112,15 @@ const CultureMap = ({ initialLocation, availableCities }: CultureMapProps) => {
 
   return (
     <div className="relative w-full h-full bg-gradient-to-br from-blue-50 to-purple-50">
-      {/* Search Bar */}
-      <div className="absolute top-4 left-1/2 transform -translate-x-1/2 z-40 w-full max-w-md px-4">
+      {/* Search Bar - Moved right to avoid overlap */}
+      <div className="absolute top-4 right-1/2 transform translate-x-1/2 z-40 w-full max-w-sm px-4">
         <div className="relative">
           <Input
             type="text"
             placeholder="Search location..."
             value={searchQuery}
             onChange={(e) => setSearchQuery(e.target.value)}
-            className="pl-10 rounded-full shadow-lg"
+            className="pl-10 rounded-full shadow-lg bg-white/95 backdrop-blur-sm"
           />
           <div className="absolute inset-y-0 left-0 flex items-center pl-3 pointer-events-none">
             <Search className="w-5 h-5 text-gray-500" />
@@ -143,12 +128,22 @@ const CultureMap = ({ initialLocation, availableCities }: CultureMapProps) => {
         </div>
       </div>
 
+      {/* Add Point Button */}
+      <div className="absolute top-4 right-4 z-40">
+        <Button
+          onClick={() => setShowAddPointForm(true)}
+          className="bg-blue-600 hover:bg-blue-700 text-white rounded-full p-3"
+        >
+          <Plus className="w-5 h-5" />
+        </Button>
+      </div>
+
       {/* Zoom Controls */}
       <div className="absolute bottom-4 right-4 z-40">
         <MapZoomControls onZoomIn={handleZoomIn} onZoomOut={handleZoomOut} />
       </div>
 
-      {/* City Info Panel */}
+      {/* City Info Panel - Simplified */}
       <CityInfoPanel 
         city={{
           name: currentCity.name,
@@ -166,7 +161,6 @@ const CultureMap = ({ initialLocation, availableCities }: CultureMapProps) => {
 
       {/* OpenStreetMap Component */}
       <OpenStreetMap
-        ref={mapRef}
         center={mapCenter}
         zoom={zoomLevel}
         markers={visibleMarkers}
