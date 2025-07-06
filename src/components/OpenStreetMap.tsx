@@ -21,44 +21,55 @@ const OpenStreetMap = forwardRef<any, OpenStreetMapProps>(({ center, zoom = 13, 
   const [isLoading, setIsLoading] = useState(true);
   const [mapInstance, setMapInstance] = useState<any>(null);
   const [error, setError] = useState<string | null>(null);
+  const mapInstanceRef = useRef<any>(null);
 
   useImperativeHandle(ref, () => ({
     getMapInstance: () => mapInstance
   }));
 
   useEffect(() => {
+    let isMounted = true;
+    
     const initializeMap = async () => {
-      if (!mapRef.current) return;
+      if (!mapRef.current || !isMounted) return;
 
       try {
         console.log('Starting map initialization...');
         
-        // Load Leaflet CSS
+        // Clean up any existing map first
+        if (mapInstanceRef.current) {
+          try {
+            mapInstanceRef.current.remove();
+            mapInstanceRef.current = null;
+          } catch (e) {
+            console.warn('Error cleaning up existing map:', e);
+          }
+        }
+
+        // Load Leaflet CSS if not already loaded
         if (!document.querySelector('link[href*="leaflet.css"]')) {
           const cssLink = document.createElement('link');
           cssLink.rel = 'stylesheet';
           cssLink.href = 'https://unpkg.com/leaflet@1.9.4/dist/leaflet.css';
-          cssLink.integrity = 'sha256-p4NxAoJBhIIN+hmNHrzRCf9tD/miZyoHS5obTRR9BMY=';
-          cssLink.crossOrigin = '';
           document.head.appendChild(cssLink);
           
           // Wait for CSS to load
           await new Promise((resolve) => {
             cssLink.onload = resolve;
-            setTimeout(resolve, 1000); // Fallback timeout
+            setTimeout(resolve, 2000); // Fallback timeout
           });
         }
 
-        // Load Leaflet JS
+        // Load Leaflet JS if not already loaded
         if (!window.L) {
           console.log('Loading Leaflet JavaScript...');
-          const script = document.createElement('script');
-          script.src = 'https://unpkg.com/leaflet@1.9.4/dist/leaflet.js';
-          script.integrity = 'sha256-20nQCchB9co0qIjJZRGuk2/Z9VM+kNiyxNV1lvTlZBo=';
-          script.crossOrigin = '';
-          
           await new Promise((resolve, reject) => {
-            script.onload = resolve;
+            const script = document.createElement('script');
+            script.src = 'https://unpkg.com/leaflet@1.9.4/dist/leaflet.js';
+            script.onload = () => {
+              console.log('Leaflet script loaded');
+              resolve(true);
+            };
             script.onerror = () => reject(new Error('Failed to load Leaflet'));
             document.head.appendChild(script);
           });
@@ -68,18 +79,24 @@ const OpenStreetMap = forwardRef<any, OpenStreetMapProps>(({ center, zoom = 13, 
           throw new Error('Leaflet failed to load');
         }
 
-        console.log('Leaflet loaded, creating map...');
+        if (!isMounted) return;
 
-        // Clear any existing content
-        mapRef.current.innerHTML = '';
+        console.log('Creating map with center:', center);
+
+        // Clear the container
+        if (mapRef.current) {
+          mapRef.current.innerHTML = '';
+        }
 
         // Fix Leaflet default marker icons
-        delete (window.L.Icon.Default.prototype as any)._getIconUrl;
-        window.L.Icon.Default.mergeOptions({
-          iconRetinaUrl: 'https://cdnjs.cloudflare.com/ajax/libs/leaflet/1.9.4/images/marker-icon-2x.png',
-          iconUrl: 'https://cdnjs.cloudflare.com/ajax/libs/leaflet/1.9.4/images/marker-icon.png',
-          shadowUrl: 'https://cdnjs.cloudflare.com/ajax/libs/leaflet/1.9.4/images/marker-shadow.png',
-        });
+        if (window.L.Icon && window.L.Icon.Default) {
+          delete (window.L.Icon.Default.prototype as any)._getIconUrl;
+          window.L.Icon.Default.mergeOptions({
+            iconRetinaUrl: 'https://cdnjs.cloudflare.com/ajax/libs/leaflet/1.9.4/images/marker-icon-2x.png',
+            iconUrl: 'https://cdnjs.cloudflare.com/ajax/libs/leaflet/1.9.4/images/marker-icon.png',
+            shadowUrl: 'https://cdnjs.cloudflare.com/ajax/libs/leaflet/1.9.4/images/marker-shadow.png',
+          });
+        }
 
         // Create the map
         const map = window.L.map(mapRef.current, {
@@ -91,7 +108,7 @@ const OpenStreetMap = forwardRef<any, OpenStreetMapProps>(({ center, zoom = 13, 
 
         // Add tile layer
         window.L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
-          attribution: '© <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> contributors',
+          attribution: '© OpenStreetMap contributors',
           maxZoom: 19,
         }).addTo(map);
 
@@ -102,31 +119,45 @@ const OpenStreetMap = forwardRef<any, OpenStreetMapProps>(({ center, zoom = 13, 
           });
         }
 
-        setMapInstance(map);
-        setIsLoading(false);
-        setError(null);
-        console.log('Map created successfully');
+        if (isMounted) {
+          mapInstanceRef.current = map;
+          setMapInstance(map);
+          setIsLoading(false);
+          setError(null);
+          console.log('Map created successfully');
+        }
 
       } catch (error) {
         console.error('Map initialization failed:', error);
-        setError('Failed to load map. Please refresh the page.');
-        setIsLoading(false);
+        if (isMounted) {
+          setError('Failed to load map. Please refresh the page.');
+          setIsLoading(false);
+        }
       }
     };
 
     initializeMap();
 
     return () => {
-      if (mapInstance) {
+      isMounted = false;
+      if (mapInstanceRef.current) {
         try {
-          mapInstance.remove();
-          console.log('Map cleaned up');
+          mapInstanceRef.current.remove();
+          mapInstanceRef.current = null;
         } catch (e) {
           console.warn('Error during map cleanup:', e);
         }
       }
     };
-  }, [center.lat, center.lng, zoom]);
+  }, []); // Only run once on mount
+
+  // Update map center and zoom when props change
+  useEffect(() => {
+    if (mapInstance && mapInstance.setView) {
+      console.log('Updating map view to:', center, zoom);
+      mapInstance.setView([center.lat, center.lng], zoom);
+    }
+  }, [center.lat, center.lng, zoom, mapInstance]);
 
   // Update markers when they change
   useEffect(() => {
@@ -187,13 +218,6 @@ const OpenStreetMap = forwardRef<any, OpenStreetMapProps>(({ center, zoom = 13, 
       }
     });
   }, [markers, mapInstance]);
-
-  // Update map center when props change
-  useEffect(() => {
-    if (mapInstance) {
-      mapInstance.setView([center.lat, center.lng], zoom);
-    }
-  }, [center.lat, center.lng, zoom, mapInstance]);
 
   if (error) {
     return (
