@@ -1,3 +1,4 @@
+
 import { useEffect, useRef, useState, forwardRef, useImperativeHandle } from 'react';
 import { MapPin, Loader } from 'lucide-react';
 
@@ -22,16 +23,12 @@ const OpenStreetMap = forwardRef<any, OpenStreetMapProps>(({ center, zoom = 13, 
   const [error, setError] = useState<string | null>(null);
   const markersRef = useRef<any[]>([]);
   const leafletRef = useRef<any>(null);
-  const initializationRef = useRef<boolean>(false);
 
   useImperativeHandle(ref, () => ({
     getMapInstance: () => mapInstance
   }));
 
   useEffect(() => {
-    if (initializationRef.current) return;
-    initializationRef.current = true;
-
     let mounted = true;
     let leafletMap: any = null;
 
@@ -41,25 +38,17 @@ const OpenStreetMap = forwardRef<any, OpenStreetMapProps>(({ center, zoom = 13, 
         
         const container = mapRef.current;
         if (!container) {
-          throw new Error('Map container element not found');
+          console.error('Map container not found');
+          return;
         }
 
+        // Clear any existing content
+        container.innerHTML = '';
+        
+        // Set container styles
         container.style.width = '100%';
         container.style.height = '100%';
         container.style.minHeight = '400px';
-        container.style.display = 'block';
-        container.style.position = 'relative';
-
-        await new Promise(resolve => {
-          const checkSize = () => {
-            if (container.offsetWidth > 0 && container.offsetHeight > 0) {
-              resolve(true);
-            } else {
-              setTimeout(checkSize, 50);
-            }
-          };
-          checkSize();
-        });
 
         const [leafletModule] = await Promise.all([
           import('leaflet'),
@@ -71,12 +60,15 @@ const OpenStreetMap = forwardRef<any, OpenStreetMapProps>(({ center, zoom = 13, 
 
         if (!mounted) return;
 
+        // Fix default markers
         delete (L.Icon.Default.prototype as any)._getIconUrl;
         L.Icon.Default.mergeOptions({
           iconRetinaUrl: 'https://cdnjs.cloudflare.com/ajax/libs/leaflet/1.9.4/images/marker-icon-2x.png',
           iconUrl: 'https://cdnjs.cloudflare.com/ajax/libs/leaflet/1.9.4/images/marker-icon.png',
           shadowUrl: 'https://cdnjs.cloudflare.com/ajax/libs/leaflet/1.9.4/images/marker-shadow.png',
         });
+
+        console.log('Creating map with center:', center, 'zoom:', zoom);
 
         leafletMap = L.map(container, {
           center: [center.lat, center.lng],
@@ -85,26 +77,28 @@ const OpenStreetMap = forwardRef<any, OpenStreetMapProps>(({ center, zoom = 13, 
           attributionControl: true,
         });
 
-        const tileLayer = L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
+        // Add tile layer
+        L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
           attribution: '© OpenStreetMap contributors',
           maxZoom: 19,
-        });
+        }).addTo(leafletMap);
 
-        tileLayer.addTo(leafletMap);
-
+        // Add click handler
         if (onMapClick) {
           leafletMap.on('click', (e: any) => {
             onMapClick(e.latlng.lat, e.latlng.lng);
           });
         }
 
-        await new Promise(resolve => setTimeout(resolve, 500));
-
-        if (mounted) {
-          setMapInstance(leafletMap);
-          setIsLoading(false);
-          setError(null);
-        }
+        // Wait for map to be ready
+        leafletMap.whenReady(() => {
+          console.log('Map is ready');
+          if (mounted) {
+            setMapInstance(leafletMap);
+            setIsLoading(false);
+            setError(null);
+          }
+        });
 
       } catch (error) {
         console.error('Error initializing map:', error);
@@ -129,6 +123,7 @@ const OpenStreetMap = forwardRef<any, OpenStreetMapProps>(({ center, zoom = 13, 
     };
   }, []);
 
+  // Update map center when props change
   useEffect(() => {
     if (mapInstance && leafletRef.current) {
       console.log('Updating map center to:', center, 'zoom:', zoom);
@@ -136,6 +131,7 @@ const OpenStreetMap = forwardRef<any, OpenStreetMapProps>(({ center, zoom = 13, 
     }
   }, [center.lat, center.lng, zoom, mapInstance]);
 
+  // Add markers
   useEffect(() => {
     if (!mapInstance || !leafletRef.current || !markers.length) {
       return;
@@ -143,6 +139,7 @@ const OpenStreetMap = forwardRef<any, OpenStreetMapProps>(({ center, zoom = 13, 
 
     console.log('Adding markers:', markers.length);
 
+    // Clear existing markers
     markersRef.current.forEach(marker => {
       try {
         mapInstance.removeLayer(marker);
@@ -152,33 +149,48 @@ const OpenStreetMap = forwardRef<any, OpenStreetMapProps>(({ center, zoom = 13, 
     });
     markersRef.current = [];
 
+    // Add new markers
     markers.forEach((marker) => {
       try {
         const L = leafletRef.current;
+        
+        // Create custom icon
         const customIcon = L.divIcon({
-          className: 'custom-div-icon',
+          className: 'custom-marker-icon',
           html: `
-            <div class="flex flex-col items-center">
-              <div class="bg-white rounded-full p-2 shadow-lg border-2 border-white hover:scale-110 transition-transform cursor-pointer">
-                <span class="text-xl">${marker.emoji}</span>
-              </div>
+            <div style="
+              background: white;
+              border-radius: 50%;
+              padding: 6px;
+              box-shadow: 0 2px 10px rgba(0,0,0,0.3);
+              border: 2px solid white;
+              display: flex;
+              align-items: center;
+              justify-content: center;
+              cursor: pointer;
+              transition: transform 0.2s;
+            " onmouseover="this.style.transform='scale(1.1)'" onmouseout="this.style.transform='scale(1)'">
+              <span style="font-size: 18px;">${marker.emoji}</span>
             </div>
           `,
-          iconSize: [40, 40],
-          iconAnchor: [20, 40],
+          iconSize: [36, 36],
+          iconAnchor: [18, 18],
         });
 
         const markerInstance = L.marker([marker.lat, marker.lng], { icon: customIcon });
         markerInstance.addTo(mapInstance);
         markersRef.current.push(markerInstance);
         
+        // Add popup
         markerInstance.bindPopup(`
-          <div class="text-center p-2">
-            <div class="text-2xl mb-2">${marker.emoji}</div>
-            <div class="font-semibold">${marker.label}</div>
-            <div class="text-sm text-gray-600 capitalize">${marker.type}</div>
+          <div style="text-align: center; padding: 8px; min-width: 120px;">
+            <div style="font-size: 24px; margin-bottom: 8px;">${marker.emoji}</div>
+            <div style="font-weight: bold; margin-bottom: 4px;">${marker.label}</div>
+            <div style="font-size: 12px; color: #666; text-transform: capitalize;">${marker.type.replace('-', ' ')}</div>
           </div>
         `);
+
+        console.log('Added marker:', marker.label, 'at', marker.lat, marker.lng);
       } catch (error) {
         console.error('Error adding marker:', error);
       }
@@ -193,12 +205,7 @@ const OpenStreetMap = forwardRef<any, OpenStreetMapProps>(({ center, zoom = 13, 
           <p className="text-red-600 font-semibold mb-2">Map Error</p>
           <p className="text-gray-600 text-sm mb-4">{error}</p>
           <button 
-            onClick={() => {
-              setError(null);
-              setIsLoading(true);
-              initializationRef.current = false;
-              window.location.reload();
-            }} 
+            onClick={() => window.location.reload()} 
             className="px-4 py-2 bg-blue-500 text-white rounded hover:bg-blue-600 transition-colors"
           >
             Retry
@@ -229,7 +236,8 @@ const OpenStreetMap = forwardRef<any, OpenStreetMapProps>(({ center, zoom = 13, 
           minHeight: '400px', 
           width: '100%', 
           height: '100%',
-          position: 'relative'
+          position: 'relative',
+          zIndex: 1
         }}
       />
     </div>

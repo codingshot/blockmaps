@@ -97,12 +97,10 @@ const CultureMap = ({ initialLocation, availableCities }: CultureMapProps) => {
 
   const handleMapClick = useCallback((lat: number, lng: number) => {
     console.log('Map clicked at:', lat, lng);
-    // Could open add point form here
   }, []);
 
   const handleSearch = () => {
     console.log('Searching for:', searchQuery);
-    // Implement search functionality
   };
 
   const currentCity = availableCities.find(city => 
@@ -112,8 +110,8 @@ const CultureMap = ({ initialLocation, availableCities }: CultureMapProps) => {
 
   return (
     <div className="relative w-full h-full bg-gradient-to-br from-blue-50 to-purple-50">
-      {/* Search Bar - Moved right to avoid overlap */}
-      <div className="absolute top-4 right-1/2 transform translate-x-1/2 z-40 w-full max-w-sm px-4">
+      {/* Search Bar - Positioned to avoid overlap with city info */}
+      <div className="absolute top-4 left-1/2 transform -translate-x-1/2 z-40 w-full max-w-sm px-4">
         <div className="relative">
           <Input
             type="text"
@@ -138,34 +136,33 @@ const CultureMap = ({ initialLocation, availableCities }: CultureMapProps) => {
         </Button>
       </div>
 
-      {/* Zoom Controls */}
+      {/* Zoom Controls - Positioned to avoid overlap */}
       <div className="absolute bottom-4 right-4 z-40">
         <MapZoomControls onZoomIn={handleZoomIn} onZoomOut={handleZoomOut} />
       </div>
 
-      {/* City Info Panel - Simplified */}
-      <CityInfoPanel 
-        city={{
-          name: currentCity.name,
-          country: 'France',
-          countryFlag: '🇫🇷',
-          coordinates: currentCity.coordinates,
-          description: currentCity.description,
-          stats: {
-            contributors: Math.floor(visibleMarkers.length * 37.8),
-            dataPoints: visibleMarkers.length,
-            lastUpdate: '2 hours ago'
-          }
-        }}
-      />
+      {/* City Info Panel - Positioned in top-left without overlap */}
+      <div className="absolute top-4 left-4 z-40">
+        <CityInfoPanel 
+          city={{
+            name: currentCity.name,
+            country: 'France',
+            countryFlag: '🇫🇷',
+            coordinates: currentCity.coordinates,
+            description: currentCity.description
+          }}
+        />
+      </div>
 
       {/* OpenStreetMap Component */}
-      <OpenStreetMap
-        center={mapCenter}
-        zoom={zoomLevel}
-        markers={visibleMarkers}
-        onMapClick={handleMapClick}
-      />
+      <div className="absolute inset-0 z-10">
+        <OpenStreetMap
+          center={mapCenter}
+          zoom={zoomLevel}
+          markers={visibleMarkers}
+          onMapClick={handleMapClick}
+        />
+      </div>
     </div>
   );
 };
