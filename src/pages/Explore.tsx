@@ -356,15 +356,6 @@ const Explore = () => {
                     </div>
                   </>
                 )}
-
-                {!city.isActive && (
-                  <div className="text-center py-4">
-                    <p className="text-gray-500 mb-2 text-sm">Map launching soon</p>
-                    <Button variant="outline" size="sm" disabled>
-                      Get Notified
-                    </Button>
-                  </div>
-                )}
               </div>
             </div>
           ))}
