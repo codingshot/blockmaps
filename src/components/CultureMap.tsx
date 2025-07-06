@@ -1,7 +1,10 @@
-
 import { useState } from 'react';
-import { MapPin, Users, Shield, Heart } from 'lucide-react';
+import { MapPin, Users, Shield, Heart, Plus } from 'lucide-react';
+import { usePrivy } from '@privy-io/react-auth';
 import OpenStreetMap from './OpenStreetMap';
+import AddPointForm from './AddPointForm';
+import AuthModal from './AuthModal';
+import { Button } from '@/components/ui/button';
 
 interface CultureMapProps {
   initialLocation: {lat: number, lng: number} | null;
@@ -17,6 +20,12 @@ interface CultureMapProps {
 const CultureMap = ({ initialLocation, availableCities }: CultureMapProps) => {
   const [selectedLayer, setSelectedLayer] = useState<string>('all');
   const [showLayerPanel, setShowLayerPanel] = useState(false);
+  const [cultureData, setCultureData] = useState(cannesCultureData);
+  const [showAddForm, setShowAddForm] = useState(false);
+  const [selectedLocation, setSelectedLocation] = useState<{lat: number, lng: number} | null>(null);
+  const [showAuthModal, setShowAuthModal] = useState(false);
+  
+  const { ready, authenticated, user } = usePrivy();
 
   // Culture data for Cannes
   const cannesCultureData = [
@@ -38,7 +47,29 @@ const CultureMap = ({ initialLocation, availableCities }: CultureMapProps) => {
 
   const handleMapClick = (lat: number, lng: number) => {
     console.log('Map clicked at:', lat, lng);
-    // TODO: Add new marker functionality
+    setSelectedLocation({ lat, lng });
+    
+    if (!ready || !authenticated) {
+      setShowAuthModal(true);
+      return;
+    }
+    
+    setShowAddForm(true);
+  };
+
+  const handleAddPoint = (newPoint: any) => {
+    setCultureData(prev => [...prev, newPoint]);
+    console.log('New point added:', newPoint);
+  };
+
+  const handleAddButtonClick = () => {
+    if (!ready || !authenticated) {
+      setShowAuthModal(true);
+      return;
+    }
+    
+    // Show instructions to click on map
+    alert('Click anywhere on the map to add a culture point!');
   };
 
   if (!initialLocation) {
@@ -142,6 +173,49 @@ const CultureMap = ({ initialLocation, availableCities }: CultureMapProps) => {
           </div>
         </div>
       </div>
+
+      {/* Add Point Button - Mobile Responsive */}
+      <div className="absolute bottom-20 sm:bottom-6 right-4 sm:right-6 z-30">
+        <Button
+          onClick={handleAddButtonClick}
+          size="lg"
+          className="h-12 w-12 sm:h-14 sm:w-14 rounded-full bg-gradient-to-r from-blue-500 to-purple-600 hover:from-blue-600 hover:to-purple-700 shadow-lg hover:shadow-xl transition-all"
+        >
+          <Plus className="w-6 h-6" />
+        </Button>
+      </div>
+
+      {/* User Info - Mobile Responsive */}
+      {ready && authenticated && user && (
+        <div className="absolute top-2 right-2 sm:top-6 sm:right-6 z-30">
+          <div className="bg-white/90 backdrop-blur-sm rounded-full px-3 py-2 shadow-lg border border-white/20">
+            <div className="flex items-center space-x-2">
+              <div className="w-6 h-6 sm:w-8 sm:h-8 bg-gradient-to-r from-blue-500 to-purple-600 rounded-full flex items-center justify-center">
+                <span className="text-xs sm:text-sm text-white font-bold">
+                  {user.email?.charAt(0).toUpperCase() || '👤'}
+                </span>
+              </div>
+              <span className="text-xs sm:text-sm font-medium hidden sm:inline">
+                {user.email || 'Connected'}
+              </span>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* Add Point Form */}
+      <AddPointForm
+        isOpen={showAddForm}
+        onClose={() => setShowAddForm(false)}
+        onSubmit={handleAddPoint}
+        selectedLocation={selectedLocation}
+      />
+
+      {/* Auth Modal */}
+      <AuthModal
+        isOpen={showAuthModal}
+        onClose={() => setShowAuthModal(false)}
+      />
     </div>
   );
 };

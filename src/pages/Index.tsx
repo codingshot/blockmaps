@@ -1,15 +1,18 @@
-
 import { useEffect, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
+import { usePrivy } from '@privy-io/react-auth';
 import { MapPin, Search, Layers } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import CultureMap from '@/components/CultureMap';
+import AuthModal from '@/components/AuthModal';
 
 const Index = () => {
   const navigate = useNavigate();
+  const { ready, authenticated } = usePrivy();
   const [userLocation, setUserLocation] = useState<{lat: number, lng: number} | null>(null);
   const [isLoadingLocation, setIsLoadingLocation] = useState(true);
   const [showOnboarding, setShowOnboarding] = useState(false);
+  const [showAuthModal, setShowAuthModal] = useState(false);
 
   // Available cities (whitelisted)
   const availableCities = [
@@ -33,18 +36,26 @@ const Index = () => {
           });
           setIsLoadingLocation(false);
           
-          // Show onboarding after 3 seconds of map viewing
+          // Show onboarding after 5 seconds of map viewing
           setTimeout(() => {
-            setShowOnboarding(true);
-          }, 3000);
+            if (!authenticated) {
+              setShowAuthModal(true);
+            } else {
+              setShowOnboarding(true);
+            }
+          }, 5000);
         },
         () => {
           // Default to Cannes if location access denied
           setUserLocation(availableCities[0].coordinates);
           setIsLoadingLocation(false);
           setTimeout(() => {
-            setShowOnboarding(true);
-          }, 3000);
+            if (!authenticated) {
+              setShowAuthModal(true);
+            } else {
+              setShowOnboarding(true);
+            }
+          }, 5000);
         }
       );
     } else {
@@ -52,10 +63,14 @@ const Index = () => {
       setUserLocation(availableCities[0].coordinates);
       setIsLoadingLocation(false);
       setTimeout(() => {
-        setShowOnboarding(true);
-      }, 3000);
+        if (!authenticated) {
+          setShowAuthModal(true);
+        } else {
+          setShowOnboarding(true);
+        }
+      }, 5000);
     }
-  }, []);
+  }, [authenticated]);
 
   const handleExploreClick = () => {
     navigate('/explore');
@@ -139,7 +154,7 @@ const Index = () => {
       </div>
 
       {/* Onboarding Modal */}
-      {showOnboarding && (
+      {showOnboarding && ready && authenticated && (
         <div className="absolute inset-0 bg-black/50 backdrop-blur-sm z-50 flex items-center justify-center p-4">
           <div className="bg-white rounded-2xl p-6 sm:p-8 max-w-md w-full text-center">
             <div className="mb-6">
@@ -168,6 +183,12 @@ const Index = () => {
           </div>
         </div>
       )}
+
+      {/* Auth Modal */}
+      <AuthModal
+        isOpen={showAuthModal}
+        onClose={() => setShowAuthModal(false)}
+      />
 
       {/* Quick Action Buttons - Mobile Responsive */}
       <div className="absolute bottom-4 sm:bottom-6 right-4 sm:right-6 z-40 space-y-3">
