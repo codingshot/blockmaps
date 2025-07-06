@@ -1,3 +1,4 @@
+
 import { useState } from 'react';
 import { Filter, X } from 'lucide-react';
 import { Button } from '@/components/ui/button';
@@ -69,7 +70,7 @@ const MapFilters = ({ selectedFilters, onFiltersChange }: MapFiltersProps) => {
   ];
 
   return (
-    <div className="absolute bottom-4 left-4 z-40 bg-white/95 backdrop-blur-md rounded-xl shadow-xl border border-white/20 w-80 max-w-sm">
+    <div className="bg-white/95 backdrop-blur-md rounded-xl shadow-xl border border-white/20 w-80 max-w-sm">
       {/* Header */}
       <div className="p-4 border-b border-gray-200">
         <div className="flex items-center justify-between mb-3">
