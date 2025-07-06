@@ -1,7 +1,7 @@
 
 import { useEffect, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { MapPin, Explore, Layers } from 'lucide-react';
+import { MapPin, Search, Layers } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import CultureMap from '@/components/CultureMap';
 
@@ -95,8 +95,9 @@ const Index = () => {
             size="sm"
             className="flex items-center space-x-2 hover:bg-blue-50"
           >
-            <Explore className="w-4 h-4" />
-            <span>Explore All Maps</span>
+            <Search className="w-4 h-4" />
+            <span className="hidden sm:inline">Explore All Maps</span>
+            <span className="sm:hidden">Explore</span>
           </Button>
         </div>
       </header>
@@ -109,28 +110,28 @@ const Index = () => {
         />
       </div>
 
-      {/* Layer Toggle Panel */}
-      <div className="absolute right-4 top-24 z-40">
-        <div className="bg-white/90 backdrop-blur-sm rounded-xl p-3 shadow-lg border border-white/20">
-          <div className="flex items-center space-x-2 mb-3">
-            <Layers className="w-4 h-4 text-blue-600" />
-            <span className="text-sm font-medium">Layers</span>
+      {/* Layer Toggle Panel - Mobile Responsive */}
+      <div className="absolute right-2 sm:right-4 top-20 sm:top-24 z-40">
+        <div className="bg-white/90 backdrop-blur-sm rounded-xl p-2 sm:p-3 shadow-lg border border-white/20">
+          <div className="flex items-center space-x-2 mb-2 sm:mb-3">
+            <Layers className="w-3 h-3 sm:w-4 sm:h-4 text-blue-600" />
+            <span className="text-xs sm:text-sm font-medium">Layers</span>
           </div>
-          <div className="space-y-2 text-xs">
+          <div className="space-y-1 sm:space-y-2 text-xs">
             <div className="flex items-center space-x-2">
-              <div className="w-3 h-3 bg-red-400 rounded-full"></div>
+              <div className="w-2 h-2 sm:w-3 sm:h-3 bg-red-400 rounded-full"></div>
               <span>Safety</span>
             </div>
             <div className="flex items-center space-x-2">
-              <div className="w-3 h-3 bg-purple-400 rounded-full"></div>
+              <div className="w-2 h-2 sm:w-3 sm:h-3 bg-purple-400 rounded-full"></div>
               <span>Nightlife</span>
             </div>
             <div className="flex items-center space-x-2">
-              <div className="w-3 h-3 bg-green-400 rounded-full"></div>
+              <div className="w-2 h-2 sm:w-3 sm:h-3 bg-green-400 rounded-full"></div>
               <span>Local Food</span>
             </div>
             <div className="flex items-center space-x-2">
-              <div className="w-3 h-3 bg-blue-400 rounded-full"></div>
+              <div className="w-2 h-2 sm:w-3 sm:h-3 bg-blue-400 rounded-full"></div>
               <span>Culture</span>
             </div>
           </div>
@@ -140,13 +141,13 @@ const Index = () => {
       {/* Onboarding Modal */}
       {showOnboarding && (
         <div className="absolute inset-0 bg-black/50 backdrop-blur-sm z-50 flex items-center justify-center p-4">
-          <div className="bg-white rounded-2xl p-8 max-w-md w-full text-center">
+          <div className="bg-white rounded-2xl p-6 sm:p-8 max-w-md w-full text-center">
             <div className="mb-6">
               <div className="w-16 h-16 bg-gradient-to-r from-blue-500 to-purple-600 rounded-full flex items-center justify-center mx-auto mb-4">
                 <span className="text-2xl">🗺️</span>
               </div>
-              <h2 className="text-2xl font-bold mb-2">Welcome to Blockmaps</h2>
-              <p className="text-gray-600">Discover authentic neighborhood culture through community-mapped insights</p>
+              <h2 className="text-xl sm:text-2xl font-bold mb-2">Welcome to Blockmaps</h2>
+              <p className="text-sm sm:text-base text-gray-600">Discover authentic neighborhood culture through community-mapped insights</p>
             </div>
             
             <div className="space-y-4">
@@ -168,13 +169,13 @@ const Index = () => {
         </div>
       )}
 
-      {/* Quick Action Buttons */}
-      <div className="absolute bottom-6 right-6 z-40 space-y-3">
-        <div className="bg-white/90 backdrop-blur-sm rounded-full p-3 shadow-lg cursor-pointer hover:bg-white transition-colors">
-          <span className="text-2xl">📍</span>
+      {/* Quick Action Buttons - Mobile Responsive */}
+      <div className="absolute bottom-4 sm:bottom-6 right-4 sm:right-6 z-40 space-y-3">
+        <div className="bg-white/90 backdrop-blur-sm rounded-full p-2 sm:p-3 shadow-lg cursor-pointer hover:bg-white transition-colors">
+          <span className="text-xl sm:text-2xl">📍</span>
         </div>
-        <div className="bg-white/90 backdrop-blur-sm rounded-full p-3 shadow-lg cursor-pointer hover:bg-white transition-colors">
-          <span className="text-2xl">➕</span>
+        <div className="bg-white/90 backdrop-blur-sm rounded-full p-2 sm:p-3 shadow-lg cursor-pointer hover:bg-white transition-colors">
+          <span className="text-xl sm:text-2xl">➕</span>
         </div>
       </div>
     </div>
