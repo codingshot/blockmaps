@@ -2,8 +2,7 @@ import React, { useState, useEffect, useCallback } from 'react';
 import OpenStreetMap from '@/components/OpenStreetMap';
 import MapZoomControls from '@/components/MapZoomControls';
 import MapFilters from '@/components/MapFilters';
-import { Input } from '@/components/ui/input';
-import { Search, Plus } from 'lucide-react';
+import { Plus } from 'lucide-react';
 import CityInfoPanel from './CityInfoPanel';
 import { Button } from '@/components/ui/button';
 
@@ -21,7 +20,6 @@ interface CultureMapProps {
 const CultureMap = ({ initialLocation, availableCities }: CultureMapProps) => {
   const [mapCenter, setMapCenter] = useState(initialLocation || availableCities[0].coordinates);
   const [zoomLevel, setZoomLevel] = useState(13);
-  const [searchQuery, setSearchQuery] = useState('');
   const [cultureData, setCultureData] = useState<any[]>([]);
   const [visibleMarkers, setVisibleMarkers] = useState<any[]>([]);
   const [showAddPointForm, setShowAddPointForm] = useState(false);
@@ -112,10 +110,6 @@ const CultureMap = ({ initialLocation, availableCities }: CultureMapProps) => {
     console.log('Map clicked at:', lat, lng);
   }, []);
 
-  const handleSearch = () => {
-    console.log('Searching for:', searchQuery);
-  };
-
   const currentCity = availableCities.find(city => 
     Math.abs(city.coordinates.lat - mapCenter.lat) < 0.01 && 
     Math.abs(city.coordinates.lng - mapCenter.lng) < 0.01
@@ -123,22 +117,6 @@ const CultureMap = ({ initialLocation, availableCities }: CultureMapProps) => {
 
   return (
     <div className="relative w-full h-full bg-gradient-to-br from-blue-50 to-purple-50">
-      {/* Search Bar - Positioned to avoid overlap with city info */}
-      <div className="absolute top-4 left-1/2 transform -translate-x-1/2 z-40 w-full max-w-sm px-4">
-        <div className="relative">
-          <Input
-            type="text"
-            placeholder="Search location..."
-            value={searchQuery}
-            onChange={(e) => setSearchQuery(e.target.value)}
-            className="pl-10 rounded-full shadow-lg bg-white/95 backdrop-blur-sm"
-          />
-          <div className="absolute inset-y-0 left-0 flex items-center pl-3 pointer-events-none">
-            <Search className="w-5 h-5 text-gray-500" />
-          </div>
-        </div>
-      </div>
-
       {/* Add Point Button */}
       <div className="absolute top-4 right-4 z-40">
         <Button
