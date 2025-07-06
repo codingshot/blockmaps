@@ -1,3 +1,4 @@
+
 import React, { useState, useEffect, useCallback } from 'react';
 import OpenStreetMap from '@/components/OpenStreetMap';
 import MapZoomControls from '@/components/MapZoomControls';
@@ -117,7 +118,7 @@ const CultureMap = ({ initialLocation, availableCities }: CultureMapProps) => {
 
   return (
     <div className="relative w-full h-full bg-gradient-to-br from-blue-50 to-purple-50">
-      {/* Add Point Button - Moved to bottom right */}
+      {/* Add Point Button - Bottom right */}
       <div className="absolute bottom-4 right-4 z-40">
         <Button
           onClick={() => setShowAddPointForm(true)}
@@ -127,7 +128,7 @@ const CultureMap = ({ initialLocation, availableCities }: CultureMapProps) => {
         </Button>
       </div>
 
-      {/* City Info Panel - Positioned in top-left without overlap */}
+      {/* City Info Panel - Top left */}
       <div className="absolute top-4 left-4 z-40">
         <CityInfoPanel 
           city={{
@@ -140,14 +141,14 @@ const CultureMap = ({ initialLocation, availableCities }: CultureMapProps) => {
         />
       </div>
 
-      {/* Map Filters - Positioned in bottom-left */}
+      {/* Map Filters - Bottom left */}
       <MapFilters 
         selectedFilters={selectedFilters}
         onFiltersChange={setSelectedFilters}
       />
 
-      {/* Zoom Controls - Positioned underneath map filters in bottom-left */}
-      <div className="absolute bottom-4 left-4 z-30 mt-2" style={{ top: 'auto', marginTop: '350px' }}>
+      {/* Zoom Controls - Positioned above map filters with proper spacing */}
+      <div className="absolute bottom-80 left-4 z-30">
         <MapZoomControls onZoomIn={handleZoomIn} onZoomOut={handleZoomOut} />
       </div>
 
