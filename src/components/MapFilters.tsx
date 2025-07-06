@@ -124,8 +124,8 @@ const MapFilters = ({ selectedFilters, onFiltersChange }: MapFiltersProps) => {
       </div>
 
       {/* All Categories with Scroll */}
-      <ScrollArea className="h-80">
-        <div className="p-4 space-y-4">
+      <ScrollArea className="h-40">
+        <div className="p-2 space-y-2">
           {categories.map(category => (
             <div key={category} className="space-y-2">
               <h4 className="text-sm font-semibold text-gray-700">{category}</h4>
