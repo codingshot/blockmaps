@@ -1,3 +1,4 @@
+
 import { useState } from 'react';
 import { MapPin, Users, Shield, Heart, Plus } from 'lucide-react';
 import { usePrivy } from '@privy-io/react-auth';
@@ -18,16 +19,7 @@ interface CultureMapProps {
 }
 
 const CultureMap = ({ initialLocation, availableCities }: CultureMapProps) => {
-  const [selectedLayer, setSelectedLayer] = useState<string>('all');
-  const [showLayerPanel, setShowLayerPanel] = useState(false);
-  const [cultureData, setCultureData] = useState(cannesCultureData);
-  const [showAddForm, setShowAddForm] = useState(false);
-  const [selectedLocation, setSelectedLocation] = useState<{lat: number, lng: number} | null>(null);
-  const [showAuthModal, setShowAuthModal] = useState(false);
-  
-  const { ready, authenticated, user } = usePrivy();
-
-  // Culture data for Cannes
+  // Culture data for Cannes - moved before its usage
   const cannesCultureData = [
     { id: '1', emoji: '🎬', type: 'culture', lat: 43.5515, lng: 7.0173, label: 'Palais des Festivals' },
     { id: '2', emoji: '🍾', type: 'nightlife', lat: 43.5501, lng: 7.0167, label: 'La Croisette Bars' },
@@ -40,6 +32,15 @@ const CultureMap = ({ initialLocation, availableCities }: CultureMapProps) => {
     { id: '9', emoji: '🌈', type: 'lgbtq', lat: 43.5510, lng: 7.0160, label: 'LGBTQ+ Friendly' },
     { id: '10', emoji: '🎨', type: 'art', lat: 43.5545, lng: 7.0195, label: 'Street Art' },
   ];
+
+  const [selectedLayer, setSelectedLayer] = useState<string>('all');
+  const [showLayerPanel, setShowLayerPanel] = useState(false);
+  const [cultureData, setCultureData] = useState(cannesCultureData);
+  const [showAddForm, setShowAddForm] = useState(false);
+  const [selectedLocation, setSelectedLocation] = useState<{lat: number, lng: number} | null>(null);
+  const [showAuthModal, setShowAuthModal] = useState(false);
+  
+  const { ready, authenticated, user } = usePrivy();
 
   const filteredMarkers = cannesCultureData.filter(point => 
     selectedLayer === 'all' || point.type === selectedLayer
@@ -82,6 +83,21 @@ const CultureMap = ({ initialLocation, availableCities }: CultureMapProps) => {
       </div>
     );
   }
+
+  // Helper function to get user display info
+  const getUserDisplayInfo = () => {
+    if (!user) return { initial: '👤', display: 'Connected' };
+    
+    if (user.email) {
+      const emailString = typeof user.email === 'string' ? user.email : user.email.address;
+      return {
+        initial: emailString.charAt(0).toUpperCase(),
+        display: emailString
+      };
+    }
+    
+    return { initial: '👤', display: 'Connected' };
+  };
 
   return (
     <div className="relative w-full h-full">
@@ -192,11 +208,11 @@ const CultureMap = ({ initialLocation, availableCities }: CultureMapProps) => {
             <div className="flex items-center space-x-2">
               <div className="w-6 h-6 sm:w-8 sm:h-8 bg-gradient-to-r from-blue-500 to-purple-600 rounded-full flex items-center justify-center">
                 <span className="text-xs sm:text-sm text-white font-bold">
-                  {user.email?.charAt(0).toUpperCase() || '👤'}
+                  {getUserDisplayInfo().initial}
                 </span>
               </div>
               <span className="text-xs sm:text-sm font-medium hidden sm:inline">
-                {user.email || 'Connected'}
+                {getUserDisplayInfo().display}
               </span>
             </div>
           </div>
