@@ -30,7 +30,7 @@ const OpenStreetMap = ({ center, zoom = 13, markers = [], onMapClick }: OpenStre
 
     const loadLeaflet = async () => {
       try {
-        console.log('Loading Leaflet library...');
+        console.log('Starting to load Leaflet library...');
         
         if (!mapRef.current) {
           console.log('No map container found');
@@ -42,6 +42,8 @@ const OpenStreetMap = ({ center, zoom = 13, markers = [], onMapClick }: OpenStre
         const L = leafletModule.default;
         leafletRef.current = L;
         
+        console.log('Leaflet loaded successfully');
+
         // Import CSS
         await import('leaflet/dist/leaflet.css');
 
@@ -65,7 +67,7 @@ const OpenStreetMap = ({ center, zoom = 13, markers = [], onMapClick }: OpenStre
         if (container.offsetWidth === 0 || container.offsetHeight === 0) {
           console.log('Container has no dimensions, setting default');
           container.style.width = '100%';
-          container.style.height = '100%';
+          container.style.height = '400px';
           container.style.minHeight = '400px';
         }
 
@@ -74,6 +76,7 @@ const OpenStreetMap = ({ center, zoom = 13, markers = [], onMapClick }: OpenStre
           leafletMap.remove();
         }
 
+        // Create map with OSM tiles
         leafletMap = L.map(container, {
           center: [center.lat, center.lng],
           zoom: zoom,
@@ -83,7 +86,7 @@ const OpenStreetMap = ({ center, zoom = 13, markers = [], onMapClick }: OpenStre
 
         console.log('Map instance created successfully');
 
-        // Add tile layer
+        // Add OpenStreetMap tile layer
         const tileLayer = L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
           attribution: '© <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> contributors',
           maxZoom: 19,
@@ -91,6 +94,7 @@ const OpenStreetMap = ({ center, zoom = 13, markers = [], onMapClick }: OpenStre
         });
 
         tileLayer.addTo(leafletMap);
+        console.log('OSM tile layer added');
 
         // Handle map clicks
         if (onMapClick) {
@@ -102,7 +106,7 @@ const OpenStreetMap = ({ center, zoom = 13, markers = [], onMapClick }: OpenStre
 
         // Set loading to false after map is ready
         leafletMap.whenReady(() => {
-          console.log('Map is ready');
+          console.log('Map is ready and loaded');
           if (mounted) {
             setIsLoading(false);
             setError(null);
@@ -110,17 +114,21 @@ const OpenStreetMap = ({ center, zoom = 13, markers = [], onMapClick }: OpenStre
           }
         });
 
-        // Fallback timeout
+        // Fallback timeout to ensure loading stops
         setTimeout(() => {
-          if (mounted) {
+          if (mounted && isLoading) {
+            console.log('Fallback: Setting loading to false after timeout');
             setIsLoading(false);
+            if (leafletMap && !mapInstance) {
+              setMapInstance(leafletMap);
+            }
           }
-        }, 3000);
+        }, 5000);
 
       } catch (error) {
         console.error('Error loading Leaflet:', error);
         if (mounted) {
-          setError('Failed to load map library');
+          setError(`Failed to load map: ${error instanceof Error ? error.message : 'Unknown error'}`);
           setIsLoading(false);
         }
       }
@@ -143,7 +151,10 @@ const OpenStreetMap = ({ center, zoom = 13, markers = [], onMapClick }: OpenStre
 
   // Update markers when they change
   useEffect(() => {
-    if (!mapInstance || !leafletRef.current) return;
+    if (!mapInstance || !leafletRef.current) {
+      console.log('Map instance or Leaflet not ready for markers');
+      return;
+    }
 
     console.log('Updating markers:', markers.length);
 
@@ -191,6 +202,8 @@ const OpenStreetMap = ({ center, zoom = 13, markers = [], onMapClick }: OpenStre
           </div>
         `);
 
+        console.log(`Added marker: ${marker.label} at ${marker.lat}, ${marker.lng}`);
+
       } catch (error) {
         console.error('Error adding marker:', error);
       }
@@ -199,18 +212,18 @@ const OpenStreetMap = ({ center, zoom = 13, markers = [], onMapClick }: OpenStre
 
   if (error) {
     return (
-      <div className="w-full h-full flex items-center justify-center bg-gray-100">
-        <div className="text-center">
+      <div className="w-full h-full flex items-center justify-center bg-gray-100 min-h-[400px]">
+        <div className="text-center p-6">
           <MapPin className="w-12 h-12 text-red-500 mx-auto mb-4" />
-          <p className="text-red-600 font-semibold">Failed to load map</p>
-          <p className="text-gray-600 text-sm">{error}</p>
+          <p className="text-red-600 font-semibold mb-2">Failed to load map</p>
+          <p className="text-gray-600 text-sm mb-4">{error}</p>
           <button 
             onClick={() => {
               setError(null);
               setIsLoading(true);
               window.location.reload();
             }} 
-            className="mt-2 px-4 py-2 bg-blue-500 text-white rounded hover:bg-blue-600"
+            className="px-4 py-2 bg-blue-500 text-white rounded hover:bg-blue-600 transition-colors"
           >
             Retry
           </button>
@@ -221,20 +234,20 @@ const OpenStreetMap = ({ center, zoom = 13, markers = [], onMapClick }: OpenStre
 
   if (isLoading) {
     return (
-      <div className="w-full h-full flex items-center justify-center bg-gradient-to-br from-blue-50 to-purple-50">
-        <div className="text-center">
+      <div className="w-full h-full flex items-center justify-center bg-gradient-to-br from-blue-50 to-purple-50 min-h-[400px]">
+        <div className="text-center p-6">
           <div className="relative mb-4">
             <Loader className="w-8 h-8 animate-spin text-blue-500 mx-auto" />
           </div>
-          <p className="text-gray-600 font-medium">Loading map...</p>
-          <p className="text-xs text-gray-500 mt-1">This may take a moment</p>
+          <p className="text-gray-600 font-medium">Loading OpenStreetMap...</p>
+          <p className="text-xs text-gray-500 mt-1">Connecting to OSM tiles</p>
         </div>
       </div>
     );
   }
 
   return (
-    <div className="relative w-full h-full">
+    <div className="relative w-full h-full min-h-[400px]">
       <div 
         ref={mapRef} 
         className="w-full h-full"

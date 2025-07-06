@@ -20,9 +20,11 @@ interface CultureMapProps {
 }
 
 const CultureMap = ({ initialLocation, availableCities }: CultureMapProps) => {
-  // Default to Cannes if no initial location
+  // Always use Cannes as default - this ensures the map loads
   const defaultLocation = { lat: 43.5528, lng: 7.0174 };
   const mapCenter = initialLocation || defaultLocation;
+
+  console.log('CultureMap rendering with center:', mapCenter);
 
   const cannesCultureData = [
     { id: '1', emoji: '🎬', type: 'culture', lat: 43.5515, lng: 7.0173, label: 'Palais des Festivals' },
@@ -76,7 +78,6 @@ const CultureMap = ({ initialLocation, availableCities }: CultureMapProps) => {
         console.log('NFT minted successfully:', nftResult);
         
         // Show success notification
-        // In a real app, you'd use a toast notification
         alert(`Culture point added and NFT minted! Token ID: ${nftResult.tokenId}`);
       } catch (error) {
         console.error('Failed to mint NFT:', error);
@@ -95,17 +96,6 @@ const CultureMap = ({ initialLocation, availableCities }: CultureMapProps) => {
     alert('Click anywhere on the map to add a culture point!');
   };
 
-  if (!initialLocation) {
-    return (
-      <div className="w-full h-full flex items-center justify-center bg-gray-100">
-        <div className="text-center">
-          <MapPin className="w-12 h-12 text-gray-400 mx-auto mb-4" />
-          <p className="text-gray-600">Loading map...</p>
-        </div>
-      </div>
-    );
-  }
-
   // Helper function to get user display info with ninja emoji
   const getUserDisplayInfo = () => {
     if (!user) return { initial: '👤', display: 'Connected' };
@@ -123,7 +113,7 @@ const CultureMap = ({ initialLocation, availableCities }: CultureMapProps) => {
 
   return (
     <div className="relative w-full h-full">
-      {/* OpenStreetMap - Always render with mapCenter */}
+      {/* OpenStreetMap - Always render with valid coordinates */}
       <OpenStreetMap
         center={mapCenter}
         zoom={13}
@@ -202,7 +192,7 @@ const CultureMap = ({ initialLocation, availableCities }: CultureMapProps) => {
         </div>
       </div>
 
-      {/* Add Point Button - Fixed positioning to avoid overlap */}
+      {/* Add Point Button */}
       <div className="absolute bottom-4 sm:bottom-6 right-4 sm:right-6 z-30">
         <Button
           onClick={handleAddButtonClick}
@@ -213,7 +203,7 @@ const CultureMap = ({ initialLocation, availableCities }: CultureMapProps) => {
         </Button>
       </div>
 
-      {/* User Info - Mobile Responsive with Dashboard Access and Ninja Emoji */}
+      {/* User Info */}
       {ready && authenticated && user && (
         <div className="absolute top-2 right-2 sm:top-6 sm:right-6 z-30">
           <Button
