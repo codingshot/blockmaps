@@ -1,3 +1,4 @@
+
 import React, { useEffect, useRef, useState } from 'react';
 import L from 'leaflet';
 import 'leaflet/dist/leaflet.css';
@@ -161,12 +162,13 @@ const OpenStreetMap: React.FC<OpenStreetMapProps> = ({
               text-shadow: 1px 1px 0 black, -1px -1px 0 black, 1px -1px 0 black, -1px 1px 0 black;
               white-space: nowrap;
               pointer-events: none;
-              z-index: 1000;
+              z-index: 500;
             ">${annotation.text}</div>`,
             className: 'text-annotation',
             iconSize: [0, 0],
             iconAnchor: [0, 0],
-          })
+          }),
+          zIndexOffset: 500
         });
         textAnnotationsRef.current!.addLayer(textMarker);
       }
@@ -216,6 +218,8 @@ const OpenStreetMap: React.FC<OpenStreetMapProps> = ({
               pane: 'overlayPane'
             }
           );
+          // Set lower z-index for heatmap overlays to ensure they stay below markers
+          (rectangle as any).options.zIndexOffset = -1000;
           layerGroup.addLayer(rectangle);
         }
       }
@@ -269,7 +273,7 @@ const OpenStreetMap: React.FC<OpenStreetMapProps> = ({
       }
     });
 
-    // Create heatmap overlays
+    // Create heatmap overlays first (so they render below markers)
     Object.entries(heatmapData).forEach(([type, data]) => {
       const heatmapLayer = createHeatmapOverlay(type, data);
       if (heatmapLayer) {
@@ -278,7 +282,7 @@ const OpenStreetMap: React.FC<OpenStreetMapProps> = ({
       }
     });
 
-    // Add regular markers
+    // Add regular markers with high z-index to ensure they appear above heatmaps
     regularMarkers.forEach(markerData => {
       try {
         const customIcon = L.divIcon({
@@ -293,7 +297,8 @@ const OpenStreetMap: React.FC<OpenStreetMapProps> = ({
             font-size: 16px;
             box-shadow: 0 2px 4px rgba(0,0,0,0.2);
             border: 2px solid #3b82f6;
-            z-index: 1000;
+            z-index: 2000;
+            position: relative;
           ">${markerData.emoji}</div>`,
           className: 'custom-emoji-marker',
           iconSize: [30, 30],
@@ -302,7 +307,7 @@ const OpenStreetMap: React.FC<OpenStreetMapProps> = ({
 
         const marker = L.marker([markerData.lat, markerData.lng], {
           icon: customIcon,
-          zIndexOffset: 1000
+          zIndexOffset: 2000 // High z-index to ensure markers appear above heatmaps
         }).addTo(mapInstanceRef.current!);
 
         marker.bindPopup(`
