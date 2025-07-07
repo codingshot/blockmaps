@@ -23,19 +23,25 @@ interface OpenStreetMapProps {
     type: string;
   }>;
   onMapClick?: (lat: number, lng: number) => void;
+  onLocationClick?: () => void;
 }
 
 const OpenStreetMap: React.FC<OpenStreetMapProps> = ({
   center,
   zoom,
   markers,
-  onMapClick
+  onMapClick,
+  onLocationClick
 }) => {
   const mapRef = useRef<HTMLDivElement>(null);
   const mapInstanceRef = useRef<L.Map | null>(null);
   const markersRef = useRef<L.Marker[]>([]);
+  const heatmapLayersRef = useRef<L.LayerGroup[]>([]);
   const [isLoading, setIsLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
+
+  // Heatmap types that should be displayed as overlays
+  const heatmapTypes = ['crime-rate', 'safety', 'property-value', 'wealth', 'noise', 'air-quality'];
 
   // Initialize map
   useEffect(() => {
@@ -53,13 +59,12 @@ const OpenStreetMap: React.FC<OpenStreetMapProps> = ({
       const map = L.map(mapRef.current, {
         center: [center.lat, center.lng],
         zoom: zoom,
-        zoomControl: false, // We have custom zoom controls
+        zoomControl: false,
         attributionControl: true,
         scrollWheelZoom: true,
         touchZoom: true,
         doubleClickZoom: true,
         dragging: true,
-        tap: true,
         tapTolerance: 15,
         maxZoom: 19,
         minZoom: 2,
@@ -85,7 +90,6 @@ const OpenStreetMap: React.FC<OpenStreetMapProps> = ({
 
       tileLayer.on('tileerror', (e) => {
         console.warn('Tile error:', e);
-        // Don't set error state for individual tile failures
       });
 
       tileLayer.addTo(map);
@@ -127,22 +131,103 @@ const OpenStreetMap: React.FC<OpenStreetMapProps> = ({
     }
   }, [center.lat, center.lng, zoom]);
 
-  // Update markers
+  // Create heatmap overlay
+  const createHeatmapOverlay = (type: string, data: any[]) => {
+    if (!mapInstanceRef.current) return null;
+
+    const layerGroup = L.layerGroup();
+    
+    // Create grid of colored rectangles to simulate heatmap
+    const bounds = mapInstanceRef.current.getBounds();
+    const gridSize = 0.005; // Size of each grid cell
+    
+    for (let lat = bounds.getSouth(); lat < bounds.getNorth(); lat += gridSize) {
+      for (let lng = bounds.getWest(); lng < bounds.getEast(); lng += gridSize) {
+        // Calculate intensity based on proximity to data points
+        let intensity = 0;
+        data.forEach(point => {
+          const distance = Math.sqrt(Math.pow(lat - point.lat, 2) + Math.pow(lng - point.lng, 2));
+          if (distance < 0.01) {
+            intensity += Math.max(0, 1 - distance * 100);
+          }
+        });
+
+        if (intensity > 0.1) {
+          const color = getHeatmapColor(type, Math.min(intensity, 1));
+          const rectangle = L.rectangle(
+            [[lat, lng], [lat + gridSize, lng + gridSize]],
+            {
+              color: color,
+              fillColor: color,
+              fillOpacity: Math.min(intensity * 0.6, 0.4),
+              weight: 0
+            }
+          );
+          layerGroup.addLayer(rectangle);
+        }
+      }
+    }
+
+    return layerGroup;
+  };
+
+  // Get color for heatmap based on type and intensity
+  const getHeatmapColor = (type: string, intensity: number) => {
+    const colors = {
+      'crime-rate': `rgba(255, ${Math.floor((1-intensity) * 100)}, 0, ${intensity})`,
+      'safety': `rgba(0, ${Math.floor(intensity * 255)}, 0, ${intensity})`,
+      'property-value': `rgba(0, 100, ${Math.floor(intensity * 255)}, ${intensity})`,
+      'wealth': `rgba(255, ${Math.floor(intensity * 215)}, 0, ${intensity})`,
+      'noise': `rgba(128, 0, ${Math.floor(intensity * 128)}, ${intensity})`,
+      'air-quality': `rgba(${Math.floor((1-intensity) * 255)}, 255, ${Math.floor((1-intensity) * 255)}, ${intensity})`
+    };
+    return colors[type as keyof typeof colors] || `rgba(100, 100, 100, ${intensity})`;
+  };
+
+  // Update markers and heatmaps
   useEffect(() => {
     if (!mapInstanceRef.current) return;
 
     console.log('Updating markers, count:', markers.length);
 
-    // Clear existing markers
+    // Clear existing markers and heatmaps
     markersRef.current.forEach(marker => {
       mapInstanceRef.current?.removeLayer(marker);
     });
     markersRef.current = [];
 
-    // Add new markers
+    heatmapLayersRef.current.forEach(layer => {
+      mapInstanceRef.current?.removeLayer(layer);
+    });
+    heatmapLayersRef.current = [];
+
+    // Separate heatmap data from regular markers
+    const heatmapData: { [key: string]: any[] } = {};
+    const regularMarkers: any[] = [];
+
     markers.forEach(markerData => {
+      if (heatmapTypes.includes(markerData.type)) {
+        if (!heatmapData[markerData.type]) {
+          heatmapData[markerData.type] = [];
+        }
+        heatmapData[markerData.type].push(markerData);
+      } else {
+        regularMarkers.push(markerData);
+      }
+    });
+
+    // Create heatmap overlays
+    Object.entries(heatmapData).forEach(([type, data]) => {
+      const heatmapLayer = createHeatmapOverlay(type, data);
+      if (heatmapLayer) {
+        heatmapLayer.addTo(mapInstanceRef.current!);
+        heatmapLayersRef.current.push(heatmapLayer);
+      }
+    });
+
+    // Add regular markers
+    regularMarkers.forEach(markerData => {
       try {
-        // Create custom icon using emoji
         const customIcon = L.divIcon({
           html: `<div style="
             background: white;
@@ -165,7 +250,6 @@ const OpenStreetMap: React.FC<OpenStreetMapProps> = ({
           icon: customIcon
         }).addTo(mapInstanceRef.current!);
 
-        // Add popup
         marker.bindPopup(`
           <div style="text-align: center; padding: 5px;">
             <div style="font-size: 20px; margin-bottom: 5px;">${markerData.emoji}</div>
@@ -202,7 +286,7 @@ const OpenStreetMap: React.FC<OpenStreetMapProps> = ({
     <div className="relative w-full h-full">
       <div 
         ref={mapRef} 
-        className="w-full h-full rounded-lg overflow-hidden touch-pan-x touch-pan-y"
+        className="w-full h-full rounded-lg overflow-hidden"
         style={{ 
           minHeight: '300px',
           touchAction: 'pan-x pan-y'

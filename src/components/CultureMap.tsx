@@ -111,6 +111,16 @@ const CultureMap = ({ initialLocation, availableCities }: CultureMapProps) => {
     console.log('Map clicked at:', lat, lng);
   }, []);
 
+  const handleLocationClick = useCallback(() => {
+    const currentCity = availableCities.find(city => 
+      Math.abs(city.coordinates.lat - mapCenter.lat) < 0.01 && 
+      Math.abs(city.coordinates.lng - mapCenter.lng) < 0.01
+    ) || availableCities[0];
+    
+    setMapCenter(currentCity.coordinates);
+    setZoomLevel(11); // Zoom out to city view
+  }, [availableCities, mapCenter]);
+
   const currentCity = availableCities.find(city => 
     Math.abs(city.coordinates.lat - mapCenter.lat) < 0.01 && 
     Math.abs(city.coordinates.lng - mapCenter.lng) < 0.01
@@ -138,18 +148,17 @@ const CultureMap = ({ initialLocation, availableCities }: CultureMapProps) => {
             coordinates: currentCity.coordinates,
             description: currentCity.description
           }}
+          onLocationClick={handleLocationClick}
         />
       </div>
 
-      {/* Map Controls Stack - Bottom left, aligned and flush */}
-      <div className="absolute bottom-4 left-4 z-40 flex flex-col space-y-0">
+      {/* Map Controls Stack - Bottom left, with spacing */}
+      <div className="absolute bottom-4 left-4 z-40 flex flex-col space-y-2">
         <MapFilters 
           selectedFilters={selectedFilters}
           onFiltersChange={setSelectedFilters}
         />
-        <div className="z-30">
-          <MapZoomControls onZoomIn={handleZoomIn} onZoomOut={handleZoomOut} />
-        </div>
+        <MapZoomControls onZoomIn={handleZoomIn} onZoomOut={handleZoomOut} />
       </div>
 
       {/* OpenStreetMap Component */}
@@ -159,6 +168,7 @@ const CultureMap = ({ initialLocation, availableCities }: CultureMapProps) => {
           zoom={zoomLevel}
           markers={visibleMarkers}
           onMapClick={handleMapClick}
+          onLocationClick={handleLocationClick}
         />
       </div>
     </div>

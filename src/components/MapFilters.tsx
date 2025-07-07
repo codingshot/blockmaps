@@ -1,6 +1,6 @@
 
 import { useState } from 'react';
-import { Filter, X, Minimize2, Maximize2 } from 'lucide-react';
+import { Filter, X, Minimize2 } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { ScrollArea } from '@/components/ui/scroll-area';
 
@@ -91,10 +91,10 @@ const MapFilters = ({ selectedFilters, onFiltersChange }: MapFiltersProps) => {
   }
 
   return (
-    <div className="bg-white/95 backdrop-blur-md rounded-xl shadow-xl border border-white/20 w-full max-w-xs sm:max-w-sm md:w-80">
+    <div className="bg-white/95 backdrop-blur-md rounded-xl shadow-xl border border-white/20 w-full max-w-xs sm:max-w-sm md:w-72">
       {/* Header */}
       <div className="p-3 sm:p-4 border-b border-gray-200">
-        <div className="flex items-center justify-between mb-2 sm:mb-3">
+        <div className="flex items-center justify-between mb-3">
           <div className="flex items-center space-x-2">
             <Filter className="w-4 h-4 sm:w-5 sm:h-5 text-gray-600" />
             <span className="font-semibold text-gray-800 text-sm sm:text-base">Map Filters</span>
@@ -104,16 +104,28 @@ const MapFilters = ({ selectedFilters, onFiltersChange }: MapFiltersProps) => {
               </span>
             )}
           </div>
-          <button
-            onClick={() => setIsMinimized(true)}
-            className="p-1 hover:bg-gray-100 rounded transition-colors"
-          >
-            <Minimize2 className="w-4 h-4 text-gray-600" />
-          </button>
+          <div className="flex items-center space-x-1">
+            {selectedFilters.length > 0 && (
+              <button
+                onClick={clearAll}
+                className="p-1 hover:bg-gray-100 rounded transition-colors text-gray-500 hover:text-gray-700"
+                title="Clear all filters"
+              >
+                <X className="w-4 h-4" />
+              </button>
+            )}
+            <button
+              onClick={() => setIsMinimized(true)}
+              className="p-1 hover:bg-gray-100 rounded transition-colors"
+              title="Minimize"
+            >
+              <Minimize2 className="w-4 h-4 text-gray-600" />
+            </button>
+          </div>
         </div>
 
         {/* Quick Filters - More compact on mobile */}
-        <div className="flex flex-wrap gap-1 mb-2 sm:mb-3">
+        <div className="flex flex-wrap gap-1 mb-2">
           {quickFilters.map(filter => {
             const filterData = allFilters.find(f => f.id === filter.id);
             if (!filterData) return null;
@@ -134,21 +146,6 @@ const MapFilters = ({ selectedFilters, onFiltersChange }: MapFiltersProps) => {
             );
           })}
         </div>
-
-        {/* Clear Filters Button */}
-        {selectedFilters.length > 0 && (
-          <div className="flex justify-center">
-            <Button
-              onClick={clearAll}
-              variant="outline"
-              size="sm"
-              className="flex items-center justify-center space-x-2 text-xs h-7"
-            >
-              <X className="w-3 h-3" />
-              <span>Clear All ({selectedFilters.length})</span>
-            </Button>
-          </div>
-        )}
       </div>
 
       {/* All Categories with Scroll - Reduced height on mobile */}
