@@ -41,6 +41,27 @@ const Navbar = () => {
 
   const isMapPage = location.pathname === '/' || location.pathname.includes('/city/');
 
+  // Get current city for search context
+  const getCurrentCity = () => {
+    if (location.pathname.includes('/city/')) {
+      const cityName = location.pathname.split('/city/')[1];
+      if (cityName === 'cannes') {
+        return {
+          name: 'Cannes',
+          coordinates: { lat: 43.5528, lng: 7.0174 }
+        };
+      }
+    }
+    // Default to Cannes for home page
+    if (location.pathname === '/') {
+      return {
+        name: 'Cannes',
+        coordinates: { lat: 43.5528, lng: 7.0174 }
+      };
+    }
+    return null;
+  };
+
   return (
     <>
       <header className="fixed top-0 left-0 right-0 z-50 bg-white/95 backdrop-blur-md border-b border-gradient-to-r from-blue-200/30 via-purple-200/30 to-pink-200/30 shadow-lg">
@@ -66,8 +87,11 @@ const Navbar = () => {
           
           {/* Search Bar - Responsive, only on map pages */}
           {isMapPage && (
-            <div className="flex-1 max-w-sm mx-4 hidden sm:block">
-              <MapSearch onLocationSelect={handleLocationSelect} />
+            <div className="flex-1 max-w-xs mx-4 hidden sm:block">
+              <MapSearch 
+                onLocationSelect={handleLocationSelect} 
+                currentCity={getCurrentCity()}
+              />
             </div>
           )}
           
@@ -110,8 +134,11 @@ const Navbar = () => {
           <div className="flex md:hidden items-center space-x-2">
             {/* Mobile search - only show on map pages */}
             {isMapPage && (
-              <div className="flex-1 max-w-xs sm:hidden">
-                <MapSearch onLocationSelect={handleLocationSelect} />
+              <div className="flex-1 max-w-[200px] sm:hidden">
+                <MapSearch 
+                  onLocationSelect={handleLocationSelect} 
+                  currentCity={getCurrentCity()}
+                />
               </div>
             )}
 
