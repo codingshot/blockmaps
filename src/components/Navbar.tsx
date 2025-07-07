@@ -2,17 +2,10 @@
 import { useNavigate, useLocation } from 'react-router-dom';
 import { usePrivy } from '@privy-io/react-auth';
 import { Button } from '@/components/ui/button';
-import { Search, Menu, X } from 'lucide-react';
+import { Menu, X } from 'lucide-react';
 import { useState } from 'react';
 import AuthModal from './AuthModal';
 import MapSearch from './MapSearch';
-import {
-  Dialog,
-  DialogContent,
-  DialogHeader,
-  DialogTitle,
-  DialogTrigger,
-} from '@/components/ui/dialog';
 import {
   Sheet,
   SheetContent,
@@ -26,7 +19,6 @@ const Navbar = () => {
   const location = useLocation();
   const { ready, authenticated, logout } = usePrivy();
   const [showAuthModal, setShowAuthModal] = useState(false);
-  const [showMobileSearch, setShowMobileSearch] = useState(false);
   const [showMobileMenu, setShowMobileMenu] = useState(false);
 
   const handleAuthAction = async () => {
@@ -40,7 +32,6 @@ const Navbar = () => {
 
   const handleLocationSelect = (lat: number, lng: number, name: string) => {
     console.log('Location selected:', { lat, lng, name });
-    setShowMobileSearch(false);
   };
 
   const handleExploreClick = () => {
@@ -73,36 +64,15 @@ const Navbar = () => {
             </div>
           </div>
           
-          {/* Search Bar - Desktop only, only on map pages */}
+          {/* Search Bar - Responsive, only on map pages */}
           {isMapPage && (
-            <div className="hidden md:flex flex-1 max-w-md mx-4">
+            <div className="flex-1 max-w-sm mx-4 hidden sm:block">
               <MapSearch onLocationSelect={handleLocationSelect} />
             </div>
           )}
           
           {/* Desktop Menu */}
           <div className="hidden md:flex items-center space-x-2">
-            {/* Mobile Search Button - only on map pages */}
-            {isMapPage && (
-              <Dialog open={showMobileSearch} onOpenChange={setShowMobileSearch}>
-                <DialogTrigger asChild>
-                  <Button 
-                    variant="outline" 
-                    size="sm"
-                    className="flex items-center justify-center w-9 h-9 p-0 border-2 border-gradient-to-r from-blue-400 to-purple-400 hover:bg-gradient-to-r hover:from-blue-50 hover:to-purple-50"
-                  >
-                    <Search className="w-4 h-4 text-blue-600" />
-                  </Button>
-                </DialogTrigger>
-                <DialogContent className="sm:max-w-md">
-                  <DialogHeader>
-                    <DialogTitle>Search Location</DialogTitle>
-                  </DialogHeader>
-                  <MapSearch onLocationSelect={handleLocationSelect} />
-                </DialogContent>
-              </Dialog>
-            )}
-
             <Button 
               onClick={handleExploreClick}
               variant="outline" 
@@ -138,25 +108,11 @@ const Navbar = () => {
 
           {/* Mobile Menu */}
           <div className="flex md:hidden items-center space-x-2">
-            {/* Mobile Search Button - only on map pages */}
+            {/* Mobile search - only show on map pages */}
             {isMapPage && (
-              <Dialog open={showMobileSearch} onOpenChange={setShowMobileSearch}>
-                <DialogTrigger asChild>
-                  <Button 
-                    variant="outline" 
-                    size="sm"
-                    className="flex items-center justify-center w-9 h-9 p-0 border-2 border-gradient-to-r from-blue-400 to-purple-400 hover:bg-gradient-to-r hover:from-blue-50 hover:to-purple-50"
-                  >
-                    <Search className="w-4 h-4 text-blue-600" />
-                  </Button>
-                </DialogTrigger>
-                <DialogContent className="sm:max-w-md">
-                  <DialogHeader>
-                    <DialogTitle>Search Location</DialogTitle>
-                  </DialogHeader>
-                  <MapSearch onLocationSelect={handleLocationSelect} />
-                </DialogContent>
-              </Dialog>
+              <div className="flex-1 max-w-xs sm:hidden">
+                <MapSearch onLocationSelect={handleLocationSelect} />
+              </div>
             )}
 
             {/* Hamburger Menu */}
