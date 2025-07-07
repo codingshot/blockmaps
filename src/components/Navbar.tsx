@@ -1,0 +1,222 @@
+
+import { useNavigate, useLocation } from 'react-router-dom';
+import { usePrivy } from '@privy-io/react-auth';
+import { Button } from '@/components/ui/button';
+import { Search, Menu, X } from 'lucide-react';
+import { useState } from 'react';
+import AuthModal from './AuthModal';
+import MapSearch from './MapSearch';
+import {
+  Dialog,
+  DialogContent,
+  DialogHeader,
+  DialogTitle,
+  DialogTrigger,
+} from '@/components/ui/dialog';
+import {
+  Sheet,
+  SheetContent,
+  SheetHeader,
+  SheetTitle,
+  SheetTrigger,
+} from '@/components/ui/sheet';
+
+const Navbar = () => {
+  const navigate = useNavigate();
+  const location = useLocation();
+  const { ready, authenticated, logout } = usePrivy();
+  const [showAuthModal, setShowAuthModal] = useState(false);
+  const [showMobileSearch, setShowMobileSearch] = useState(false);
+  const [showMobileMenu, setShowMobileMenu] = useState(false);
+
+  const handleAuthAction = async () => {
+    if (authenticated) {
+      await logout();
+    } else {
+      setShowAuthModal(true);
+    }
+    setShowMobileMenu(false);
+  };
+
+  const handleLocationSelect = (lat: number, lng: number, name: string) => {
+    console.log('Location selected:', { lat, lng, name });
+    setShowMobileSearch(false);
+  };
+
+  const handleExploreClick = () => {
+    navigate('/explore');
+    setShowMobileMenu(false);
+  };
+
+  const isMapPage = location.pathname === '/' || location.pathname.includes('/city/');
+
+  return (
+    <>
+      <header className="fixed top-0 left-0 right-0 z-50 bg-white/95 backdrop-blur-md border-b border-gradient-to-r from-blue-200/30 via-purple-200/30 to-pink-200/30 shadow-lg">
+        <div className="container mx-auto px-4 py-3 flex items-center justify-between">
+          <div 
+            className="flex items-center space-x-2 cursor-pointer"
+            onClick={() => navigate('/')}
+          >
+            <div className="w-8 h-8 flex items-center justify-center">
+              <img 
+                src="/lovable-uploads/c685a2ad-a3fd-49c6-9887-8b20a1c7f5ee.png" 
+                alt="Blockmaps Logo" 
+                className="w-8 h-8 object-contain"
+              />
+            </div>
+            <div>
+              <h1 className="text-xl font-bold bg-gradient-to-r from-blue-600 via-purple-600 to-pink-600 bg-clip-text text-transparent">
+                blockmaps
+              </h1>
+              <p className="text-xs bg-gradient-to-r from-green-600 to-orange-600 bg-clip-text text-transparent font-medium">culture mapped live</p>
+            </div>
+          </div>
+          
+          {/* Search Bar - Desktop only, only on map pages */}
+          {isMapPage && (
+            <div className="hidden md:flex flex-1 max-w-md mx-4">
+              <MapSearch onLocationSelect={handleLocationSelect} />
+            </div>
+          )}
+          
+          {/* Desktop Menu */}
+          <div className="hidden md:flex items-center space-x-2">
+            {/* Mobile Search Button - only on map pages */}
+            {isMapPage && (
+              <Dialog open={showMobileSearch} onOpenChange={setShowMobileSearch}>
+                <DialogTrigger asChild>
+                  <Button 
+                    variant="outline" 
+                    size="sm"
+                    className="flex items-center justify-center w-9 h-9 p-0 border-2 border-gradient-to-r from-blue-400 to-purple-400 hover:bg-gradient-to-r hover:from-blue-50 hover:to-purple-50"
+                  >
+                    <Search className="w-4 h-4 text-blue-600" />
+                  </Button>
+                </DialogTrigger>
+                <DialogContent className="sm:max-w-md">
+                  <DialogHeader>
+                    <DialogTitle>Search Location</DialogTitle>
+                  </DialogHeader>
+                  <MapSearch onLocationSelect={handleLocationSelect} />
+                </DialogContent>
+              </Dialog>
+            )}
+
+            <Button 
+              onClick={handleExploreClick}
+              variant="outline" 
+              size="sm"
+              className="flex items-center space-x-2 border-2 border-gradient-to-r from-blue-400 to-purple-400 hover:bg-gradient-to-r hover:from-blue-50 hover:to-purple-50 text-blue-600 hover:text-purple-600 transition-all duration-300"
+            >
+              <span>Explore</span>
+            </Button>
+
+            {/* Auth Button */}
+            {ready && (
+              <Button
+                onClick={handleAuthAction}
+                variant={authenticated ? "ghost" : "default"}
+                size="sm"
+                className={`flex items-center space-x-2 transition-all duration-300 ${
+                  authenticated 
+                    ? "text-purple-600 hover:bg-purple-50" 
+                    : "bg-gradient-to-r from-blue-500 to-purple-600 hover:from-blue-600 hover:to-purple-700 text-white"
+                }`}
+              >
+                {authenticated ? (
+                  <>
+                    <span className="text-lg">🥷</span>
+                    <span>Logout</span>
+                  </>
+                ) : (
+                  <span>Connect</span>
+                )}
+              </Button>
+            )}
+          </div>
+
+          {/* Mobile Menu */}
+          <div className="flex md:hidden items-center space-x-2">
+            {/* Mobile Search Button - only on map pages */}
+            {isMapPage && (
+              <Dialog open={showMobileSearch} onOpenChange={setShowMobileSearch}>
+                <DialogTrigger asChild>
+                  <Button 
+                    variant="outline" 
+                    size="sm"
+                    className="flex items-center justify-center w-9 h-9 p-0 border-2 border-gradient-to-r from-blue-400 to-purple-400 hover:bg-gradient-to-r hover:from-blue-50 hover:to-purple-50"
+                  >
+                    <Search className="w-4 h-4 text-blue-600" />
+                  </Button>
+                </DialogTrigger>
+                <DialogContent className="sm:max-w-md">
+                  <DialogHeader>
+                    <DialogTitle>Search Location</DialogTitle>
+                  </DialogHeader>
+                  <MapSearch onLocationSelect={handleLocationSelect} />
+                </DialogContent>
+              </Dialog>
+            )}
+
+            {/* Hamburger Menu */}
+            <Sheet open={showMobileMenu} onOpenChange={setShowMobileMenu}>
+              <SheetTrigger asChild>
+                <Button
+                  variant="outline"
+                  size="sm"
+                  className="flex items-center justify-center w-9 h-9 p-0 border-2 border-gradient-to-r from-blue-400 to-purple-400 hover:bg-gradient-to-r hover:from-blue-50 hover:to-purple-50"
+                >
+                  <Menu className="w-4 h-4 text-blue-600" />
+                </Button>
+              </SheetTrigger>
+              <SheetContent side="right" className="w-72">
+                <SheetHeader>
+                  <SheetTitle className="text-left">Menu</SheetTitle>
+                </SheetHeader>
+                <div className="flex flex-col space-y-4 mt-6">
+                  <Button 
+                    onClick={handleExploreClick}
+                    variant="outline" 
+                    className="w-full justify-start border-2 border-gradient-to-r from-blue-400 to-purple-400 hover:bg-gradient-to-r hover:from-blue-50 hover:to-purple-50 text-blue-600 hover:text-purple-600 transition-all duration-300"
+                  >
+                    Explore Cities
+                  </Button>
+
+                  {ready && (
+                    <Button
+                      onClick={handleAuthAction}
+                      variant={authenticated ? "ghost" : "default"}
+                      className={`w-full justify-start transition-all duration-300 ${
+                        authenticated 
+                          ? "text-purple-600 hover:bg-purple-50" 
+                          : "bg-gradient-to-r from-blue-500 to-purple-600 hover:from-blue-600 hover:to-purple-700 text-white"
+                      }`}
+                    >
+                      {authenticated ? (
+                        <>
+                          <span className="text-lg mr-2">🥷</span>
+                          <span>Logout</span>
+                        </>
+                      ) : (
+                        <span>Connect Wallet</span>
+                      )}
+                    </Button>
+                  )}
+                </div>
+              </SheetContent>
+            </Sheet>
+          </div>
+        </div>
+      </header>
+
+      {/* Auth Modal */}
+      <AuthModal
+        isOpen={showAuthModal}
+        onClose={() => setShowAuthModal(false)}
+      />
+    </>
+  );
+};
+
+export default Navbar;

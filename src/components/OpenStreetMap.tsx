@@ -1,11 +1,20 @@
 
-import { useEffect, useRef, useState } from 'react';
-import { MapPin, Loader } from 'lucide-react';
+import React, { useEffect, useRef, useState } from 'react';
+import L from 'leaflet';
+import 'leaflet/dist/leaflet.css';
+
+// Fix for default markers
+delete (L.Icon.Default.prototype as any)._getIconUrl;
+L.Icon.Default.mergeOptions({
+  iconRetinaUrl: 'https://cdnjs.cloudflare.com/ajax/libs/leaflet/1.7.1/images/marker-icon-2x.png',
+  iconUrl: 'https://cdnjs.cloudflare.com/ajax/libs/leaflet/1.7.1/images/marker-icon.png',
+  shadowUrl: 'https://cdnjs.cloudflare.com/ajax/libs/leaflet/1.7.1/images/marker-shadow.png',
+});
 
 interface OpenStreetMapProps {
   center: { lat: number; lng: number };
-  zoom?: number;
-  markers?: Array<{
+  zoom: number;
+  markers: Array<{
     id: string;
     lat: number;
     lng: number;
@@ -16,268 +25,174 @@ interface OpenStreetMapProps {
   onMapClick?: (lat: number, lng: number) => void;
 }
 
-const OpenStreetMap = ({ center, zoom = 13, markers = [], onMapClick }: OpenStreetMapProps) => {
+const OpenStreetMap: React.FC<OpenStreetMapProps> = ({
+  center,
+  zoom,
+  markers,
+  onMapClick
+}) => {
   const mapRef = useRef<HTMLDivElement>(null);
+  const mapInstanceRef = useRef<L.Map | null>(null);
+  const markersRef = useRef<L.Marker[]>([]);
   const [isLoading, setIsLoading] = useState(true);
-  const [mapInstance, setMapInstance] = useState<any>(null);
   const [error, setError] = useState<string | null>(null);
-  const markersRef = useRef<any[]>([]);
-  const leafletRef = useRef<any>(null);
 
+  // Initialize map
   useEffect(() => {
-    let mounted = true;
-    let leafletMap: any = null;
+    if (!mapRef.current) return;
 
-    const loadLeaflet = async () => {
-      try {
-        console.log('Loading Leaflet library...');
-        
-        // Check if container exists and is visible
-        if (!mapRef.current) {
-          console.log('No map container found');
-          return;
-        }
+    try {
+      // Clear existing map
+      if (mapInstanceRef.current) {
+        mapInstanceRef.current.remove();
+      }
 
-        // Wait a bit more for DOM to be ready
-        await new Promise(resolve => setTimeout(resolve, 200));
+      console.log('Initializing map with center:', center, 'zoom:', zoom);
 
-        if (!mounted) {
-          console.log('Component unmounted during wait');
-          return;
-        }
+      // Create map with better mobile settings
+      const map = L.map(mapRef.current, {
+        center: [center.lat, center.lng],
+        zoom: zoom,
+        zoomControl: false, // We have custom zoom controls
+        attributionControl: true,
+        scrollWheelZoom: true,
+        touchZoom: true,
+        doubleClickZoom: true,
+        dragging: true,
+        tap: true,
+        tapTolerance: 15,
+        maxZoom: 19,
+        minZoom: 2,
+      });
 
-        // Dynamically import Leaflet
-        const leafletModule = await import('leaflet');
-        const L = leafletModule.default;
-        leafletRef.current = L;
-        
-        // Import CSS
-        await import('leaflet/dist/leaflet.css');
+      // Add tile layer with better error handling
+      const tileLayer = L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
+        attribution: '© OpenStreetMap contributors',
+        maxZoom: 19,
+        errorTileUrl: 'data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAYAAAAfFcSJAAAADUlEQVR42mNkYPhfDwAChwGA60e6kgAAAABJRU5ErkJggg==',
+      });
 
-        if (!mounted || !mapRef.current) {
-          console.log('Component unmounted or container lost during loading');
-          return;
-        }
+      tileLayer.on('loading', () => {
+        console.log('Tiles loading...');
+        setIsLoading(true);
+      });
 
-        console.log('Creating map instance with center:', center);
+      tileLayer.on('load', () => {
+        console.log('Tiles loaded successfully');
+        setIsLoading(false);
+        setError(null);
+      });
 
-        // Fix for default markers
-        delete (L.Icon.Default.prototype as any)._getIconUrl;
-        L.Icon.Default.mergeOptions({
-          iconRetinaUrl: 'https://cdnjs.cloudflare.com/ajax/libs/leaflet/1.9.4/images/marker-icon-2x.png',
-          iconUrl: 'https://cdnjs.cloudflare.com/ajax/libs/leaflet/1.9.4/images/marker-icon.png',
-          shadowUrl: 'https://cdnjs.cloudflare.com/ajax/libs/leaflet/1.9.4/images/marker-shadow.png',
+      tileLayer.on('tileerror', (e) => {
+        console.warn('Tile error:', e);
+        // Don't set error state for individual tile failures
+      });
+
+      tileLayer.addTo(map);
+
+      // Handle map clicks
+      if (onMapClick) {
+        map.on('click', (e) => {
+          onMapClick(e.latlng.lat, e.latlng.lng);
         });
-
-        // Ensure container has dimensions
-        const container = mapRef.current;
-        if (container.offsetWidth === 0 || container.offsetHeight === 0) {
-          console.log('Container has no dimensions, setting default');
-          container.style.width = '100%';
-          container.style.height = '100%';
-          container.style.minHeight = '400px';
-        }
-
-        try {
-          // Clear any existing map instance
-          if (leafletMap) {
-            leafletMap.remove();
-          }
-
-          leafletMap = L.map(container, {
-            center: [center.lat, center.lng],
-            zoom: zoom,
-            zoomControl: true,
-            attributionControl: true,
-            preferCanvas: false,
-            fadeAnimation: true,
-            zoomAnimation: true
-          });
-
-          console.log('Map instance created successfully');
-
-          // Add tile layer with error handling
-          const tileLayer = L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
-            attribution: '© <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> contributors',
-            maxZoom: 19,
-            minZoom: 1
-          });
-
-          tileLayer.addTo(leafletMap);
-
-          // Handle tile loading events
-          tileLayer.on('loading', () => {
-            console.log('Tiles are loading...');
-          });
-
-          tileLayer.on('load', () => {
-            console.log('Tiles loaded successfully');
-            if (mounted) {
-              setIsLoading(false);
-              setError(null);
-            }
-          });
-
-          tileLayer.on('tileerror', (e: any) => {
-            console.warn('Tile loading error:', e);
-            // Don't set error state for individual tile failures
-          });
-
-          // Fallback timeout to hide loading state
-          setTimeout(() => {
-            if (mounted && isLoading) {
-              console.log('Fallback: Setting loading to false after timeout');
-              setIsLoading(false);
-              setError(null);
-            }
-          }, 3000);
-
-          // Handle map clicks
-          if (onMapClick) {
-            leafletMap.on('click', (e: any) => {
-              console.log('Map clicked at:', e.latlng.lat, e.latlng.lng);
-              onMapClick(e.latlng.lat, e.latlng.lng);
-            });
-          }
-
-          // Map ready event
-          leafletMap.whenReady(() => {
-            console.log('Map is ready');
-            if (mounted) {
-              setIsLoading(false);
-              setError(null);
-            }
-          });
-
-          if (mounted) {
-            setMapInstance(leafletMap);
-          }
-
-        } catch (mapError) {
-          console.error('Error creating map:', mapError);
-          if (mounted) {
-            setError('Failed to initialize map');
-            setIsLoading(false);
-          }
-        }
-
-      } catch (error) {
-        console.error('Error loading Leaflet:', error);
-        if (mounted) {
-          setError('Failed to load map library');
-          setIsLoading(false);
-        }
       }
-    };
 
-    // Start loading with a delay to ensure DOM is ready
-    const timer = setTimeout(() => {
-      if (mounted && mapRef.current) {
-        loadLeaflet();
-      }
-    }, 100);
+      // Store map reference
+      mapInstanceRef.current = map;
 
-    return () => {
-      mounted = false;
-      clearTimeout(timer);
-      if (leafletMap) {
-        console.log('Cleaning up map instance');
-        try {
-          leafletMap.remove();
-        } catch (e) {
-          console.warn('Error during map cleanup:', e);
+      // Set loading to false after a short delay if tiles haven't loaded
+      const loadingTimeout = setTimeout(() => {
+        setIsLoading(false);
+      }, 3000);
+
+      return () => {
+        clearTimeout(loadingTimeout);
+        if (mapInstanceRef.current) {
+          mapInstanceRef.current.remove();
+          mapInstanceRef.current = null;
         }
-      }
-    };
-  }, [center.lat, center.lng, zoom, isLoading]);
+      };
+    } catch (err) {
+      console.error('Error initializing map:', err);
+      setError('Failed to load map');
+      setIsLoading(false);
+    }
+  }, []);
 
-  // Update markers when they change
+  // Update map center and zoom
   useEffect(() => {
-    if (!mapInstance || !leafletRef.current) return;
+    if (mapInstanceRef.current) {
+      console.log('Updating map center to:', center, 'zoom:', zoom);
+      mapInstanceRef.current.setView([center.lat, center.lng], zoom);
+    }
+  }, [center.lat, center.lng, zoom]);
 
-    console.log('Updating markers:', markers.length);
+  // Update markers
+  useEffect(() => {
+    if (!mapInstanceRef.current) return;
 
-    // Clear existing custom markers
+    console.log('Updating markers, count:', markers.length);
+
+    // Clear existing markers
     markersRef.current.forEach(marker => {
-      try {
-        mapInstance.removeLayer(marker);
-      } catch (e) {
-        console.warn('Error removing marker:', e);
-      }
+      mapInstanceRef.current?.removeLayer(marker);
     });
     markersRef.current = [];
 
     // Add new markers
-    markers.forEach((marker) => {
+    markers.forEach(markerData => {
       try {
-        const L = leafletRef.current;
-        if (!L) return;
-
+        // Create custom icon using emoji
         const customIcon = L.divIcon({
-          className: 'custom-div-icon',
-          html: `
-            <div class="flex flex-col items-center group">
-              <div class="bg-white rounded-full p-2 shadow-lg border-2 border-white hover:scale-110 transition-transform cursor-pointer">
-                <span class="text-xl">${marker.emoji}</span>
-              </div>
-            </div>
-          `,
-          iconSize: [40, 40],
-          iconAnchor: [20, 40],
+          html: `<div style="
+            background: white;
+            border-radius: 50%;
+            width: 30px;
+            height: 30px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 16px;
+            box-shadow: 0 2px 4px rgba(0,0,0,0.2);
+            border: 2px solid #3b82f6;
+          ">${markerData.emoji}</div>`,
+          className: 'custom-emoji-marker',
+          iconSize: [30, 30],
+          iconAnchor: [15, 15],
         });
 
-        const markerInstance = L.marker([marker.lat, marker.lng], { 
+        const marker = L.marker([markerData.lat, markerData.lng], {
           icon: customIcon
-        });
-        
-        markerInstance.addTo(mapInstance);
-        markersRef.current.push(markerInstance);
-        
-        markerInstance.bindPopup(`
-          <div class="text-center p-2">
-            <div class="text-2xl mb-2">${marker.emoji}</div>
-            <div class="font-semibold">${marker.label}</div>
-            <div class="text-sm text-gray-600 capitalize">${marker.type}</div>
+        }).addTo(mapInstanceRef.current!);
+
+        // Add popup
+        marker.bindPopup(`
+          <div style="text-align: center; padding: 5px;">
+            <div style="font-size: 20px; margin-bottom: 5px;">${markerData.emoji}</div>
+            <div style="font-weight: bold; margin-bottom: 3px;">${markerData.label}</div>
+            <div style="font-size: 12px; color: #666;">${markerData.type}</div>
           </div>
         `);
 
-      } catch (error) {
-        console.error('Error adding marker:', error);
+        markersRef.current.push(marker);
+      } catch (err) {
+        console.error('Error creating marker:', err, markerData);
       }
     });
-  }, [markers, mapInstance]);
+  }, [markers]);
 
   if (error) {
     return (
-      <div className="w-full h-full flex items-center justify-center bg-gray-100">
-        <div className="text-center">
-          <MapPin className="w-12 h-12 text-red-500 mx-auto mb-4" />
-          <p className="text-red-600 font-semibold">Failed to load map</p>
-          <p className="text-gray-600 text-sm">{error}</p>
+      <div className="w-full h-full flex items-center justify-center bg-gray-100 rounded-lg">
+        <div className="text-center p-4">
+          <div className="text-red-500 mb-2">⚠️</div>
+          <div className="text-sm text-gray-600">{error}</div>
           <button 
-            onClick={() => {
-              setError(null);
-              setIsLoading(true);
-              window.location.reload();
-            }} 
-            className="mt-2 px-4 py-2 bg-blue-500 text-white rounded hover:bg-blue-600"
+            onClick={() => window.location.reload()} 
+            className="mt-2 px-3 py-1 bg-blue-500 text-white rounded text-sm hover:bg-blue-600"
           >
             Retry
           </button>
-        </div>
-      </div>
-    );
-  }
-
-  if (isLoading) {
-    return (
-      <div className="w-full h-full flex items-center justify-center bg-gradient-to-br from-blue-50 to-purple-50">
-        <div className="text-center">
-          <div className="relative mb-4">
-            <Loader className="w-8 h-8 animate-spin text-blue-500 mx-auto" />
-          </div>
-          <p className="text-gray-600 font-medium">Loading map...</p>
-          <p className="text-xs text-gray-500 mt-1">This may take a moment</p>
         </div>
       </div>
     );
@@ -287,9 +202,20 @@ const OpenStreetMap = ({ center, zoom = 13, markers = [], onMapClick }: OpenStre
     <div className="relative w-full h-full">
       <div 
         ref={mapRef} 
-        className="w-full h-full"
-        style={{ minHeight: '400px' }}
+        className="w-full h-full rounded-lg overflow-hidden touch-pan-x touch-pan-y"
+        style={{ 
+          minHeight: '300px',
+          touchAction: 'pan-x pan-y'
+        }}
       />
+      {isLoading && (
+        <div className="absolute inset-0 bg-white/80 flex items-center justify-center rounded-lg">
+          <div className="text-center">
+            <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-blue-500 mx-auto mb-2"></div>
+            <div className="text-sm text-gray-600">Loading map...</div>
+          </div>
+        </div>
+      )}
     </div>
   );
 };

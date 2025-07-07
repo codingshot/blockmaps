@@ -14,7 +14,7 @@ const AuthModal = ({ isOpen, onClose }: AuthModalProps) => {
   const [isLoading, setIsLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
 
-  const handleLogin = async (method: 'wallet' | 'email') => {
+  const handleLogin = async () => {
     try {
       setIsLoading(true);
       setError(null);
@@ -63,7 +63,7 @@ const AuthModal = ({ isOpen, onClose }: AuthModalProps) => {
 
           <div className="space-y-3">
             <Button
-              onClick={() => handleLogin('wallet')}
+              onClick={handleLogin}
               disabled={isLoading}
               className="w-full h-12 bg-gradient-to-r from-blue-500 to-purple-600 hover:from-blue-600 hover:to-purple-700 disabled:opacity-50"
             >
@@ -72,7 +72,7 @@ const AuthModal = ({ isOpen, onClose }: AuthModalProps) => {
             </Button>
             
             <Button
-              onClick={() => handleLogin('email')}
+              onClick={handleLogin}
               disabled={isLoading}
               variant="outline"
               className="w-full h-12"
@@ -84,7 +84,24 @@ const AuthModal = ({ isOpen, onClose }: AuthModalProps) => {
 
           <div className="text-center pt-4">
             <p className="text-xs text-gray-500">
-              By connecting, you agree to our Terms of Service and Privacy Policy
+              By connecting, you agree to our{' '}
+              <a 
+                href="/terms" 
+                target="_blank" 
+                rel="noopener noreferrer"
+                className="text-blue-600 hover:text-blue-700 underline"
+              >
+                Terms of Service
+              </a>
+              {' '}and{' '}
+              <a 
+                href="/privacy" 
+                target="_blank" 
+                rel="noopener noreferrer"
+                className="text-blue-600 hover:text-blue-700 underline"
+              >
+                Privacy Policy
+              </a>
             </p>
           </div>
         </div>
