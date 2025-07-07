@@ -9,7 +9,7 @@ interface PrivyWrapperProps {
 const PrivyWrapper = ({ children }: PrivyWrapperProps) => {
   return (
     <PrivyProvider
-      appId="clpispdty00ycl80fpueukbhl"
+      appId="cmctpdd0m011pla0ms48a4ezf"
       config={{
         loginMethods: ['email', 'wallet'],
         appearance: {
