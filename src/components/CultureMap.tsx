@@ -1,3 +1,4 @@
+
 import React, { useState, useEffect, useCallback } from 'react';
 import OpenStreetMap from '@/components/OpenStreetMap';
 import MapZoomControls from '@/components/MapZoomControls';
@@ -19,7 +20,7 @@ interface CultureMapProps {
 
 const CultureMap = ({ initialLocation, availableCities }: CultureMapProps) => {
   const [mapCenter, setMapCenter] = useState(initialLocation || availableCities[0].coordinates);
-  const [zoomLevel, setZoomLevel] = useState(13);
+  const [zoomLevel, setZoomLevel] = useState(15); // Increased from 13 to 15 for city-focused view
   const [cultureData, setCultureData] = useState<any[]>([]);
   const [visibleMarkers, setVisibleMarkers] = useState<any[]>([]);
   const [showAddPointForm, setShowAddPointForm] = useState(false);
@@ -117,7 +118,7 @@ const CultureMap = ({ initialLocation, availableCities }: CultureMapProps) => {
     ) || availableCities[0];
     
     setMapCenter(currentCity.coordinates);
-    setZoomLevel(11); // Zoom out to city view
+    setZoomLevel(15); // Changed from 11 to 15 for better city focus
   }, [availableCities, mapCenter]);
 
   const currentCity = availableCities.find(city => 
