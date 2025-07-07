@@ -1,4 +1,3 @@
-
 import React, { useEffect, useRef, useState } from 'react';
 import L from 'leaflet';
 import 'leaflet/dist/leaflet.css';
@@ -182,15 +181,15 @@ const OpenStreetMap: React.FC<OpenStreetMapProps> = ({
     }
   }, [center.lat, center.lng, zoom]);
 
-  // Create granular heatmap overlay with smaller grid
+  // Create granular heatmap overlay with much smaller grid
   const createHeatmapOverlay = (type: string, data: any[]) => {
     if (!mapInstanceRef.current) return null;
 
     const layerGroup = L.layerGroup();
     
-    // Create smaller, more granular grid
+    // Create much smaller, more granular grid
     const bounds = mapInstanceRef.current.getBounds();
-    const gridSize = 0.002; // Much smaller grid size for more granularity
+    const gridSize = 0.0005; // Much smaller grid size for higher granularity
     
     for (let lat = bounds.getSouth(); lat < bounds.getNorth(); lat += gridSize) {
       for (let lng = bounds.getWest(); lng < bounds.getEast(); lng += gridSize) {
@@ -198,19 +197,20 @@ const OpenStreetMap: React.FC<OpenStreetMapProps> = ({
         let intensity = 0;
         data.forEach(point => {
           const distance = Math.sqrt(Math.pow(lat - point.lat, 2) + Math.pow(lng - point.lng, 2));
-          if (distance < 0.005) { // Smaller influence radius
-            intensity += Math.max(0, 1 - distance * 200);
+          if (distance < 0.003) { // Smaller influence radius for more precision
+            intensity += Math.max(0, 1 - distance * 300);
           }
         });
 
-        if (intensity > 0.05) { // Lower threshold for more coverage
+        // Only create squares where there's actual data
+        if (intensity > 0.1) { // Higher threshold to avoid too many empty squares
           const color = getHeatmapColor(type, Math.min(intensity, 1));
           const rectangle = L.rectangle(
             [[lat, lng], [lat + gridSize, lng + gridSize]],
             {
               color: color,
               fillColor: color,
-              fillOpacity: Math.min(intensity * 0.4, 0.3),
+              fillOpacity: Math.min(intensity * 0.5, 0.4),
               weight: 0,
               interactive: false,
               pane: 'overlayPane'
@@ -224,17 +224,17 @@ const OpenStreetMap: React.FC<OpenStreetMapProps> = ({
     return layerGroup;
   };
 
-  // Get color for heatmap based on type and intensity
+  // Get unique color for each heatmap type and intensity
   const getHeatmapColor = (type: string, intensity: number) => {
     const colors = {
-      'crime-rate': `rgb(255, ${Math.floor((1-intensity) * 100)}, 0)`,
-      'safety': `rgb(0, ${Math.floor(intensity * 255)}, 0)`,
-      'property-value': `rgb(0, 100, ${Math.floor(intensity * 255)})`,
-      'wealth': `rgb(255, ${Math.floor(intensity * 215)}, 0)`,
-      'noise': `rgb(128, 0, ${Math.floor(intensity * 128)})`,
-      'air-quality': `rgb(${Math.floor((1-intensity) * 255)}, 255, ${Math.floor((1-intensity) * 255)})`
+      'crime-rate': `rgb(${Math.floor(255 * intensity)}, ${Math.floor(50 * (1-intensity))}, 0)`, // Red-orange gradient
+      'safety': `rgb(0, ${Math.floor(200 * intensity)}, ${Math.floor(100 * intensity)})`, // Green gradient
+      'property-value': `rgb(${Math.floor(100 * intensity)}, ${Math.floor(150 * intensity)}, ${Math.floor(255 * intensity)})`, // Blue gradient
+      'wealth': `rgb(${Math.floor(255 * intensity)}, ${Math.floor(200 * intensity)}, 0)`, // Gold gradient
+      'noise': `rgb(${Math.floor(150 * intensity)}, 0, ${Math.floor(200 * intensity)})`, // Purple gradient
+      'air-quality': `rgb(0, ${Math.floor(255 * intensity)}, ${Math.floor(200 * intensity)})`  // Cyan gradient
     };
-    return colors[type as keyof typeof colors] || `rgb(100, 100, 100)`;
+    return colors[type as keyof typeof colors] || `rgb(128, 128, 128)`;
   };
 
   // Update markers and heatmaps
