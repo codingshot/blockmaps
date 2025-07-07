@@ -1,4 +1,3 @@
-
 import React, { useState, useEffect, useCallback } from 'react';
 import OpenStreetMap from '@/components/OpenStreetMap';
 import MapZoomControls from '@/components/MapZoomControls';
@@ -129,7 +128,7 @@ const CultureMap = ({ initialLocation, availableCities }: CultureMapProps) => {
   return (
     <div className="relative w-full h-full bg-gradient-to-br from-blue-50 to-purple-50">
       {/* Add Point Button - Bottom right */}
-      <div className="absolute bottom-4 right-4 z-40">
+      <div className="absolute bottom-4 right-4 z-50">
         <Button
           onClick={() => setShowAddPointForm(true)}
           className="bg-blue-600 hover:bg-blue-700 text-white rounded-full p-3"
@@ -139,7 +138,7 @@ const CultureMap = ({ initialLocation, availableCities }: CultureMapProps) => {
       </div>
 
       {/* City Info Panel - Top right */}
-      <div className="absolute top-4 right-4 z-40">
+      <div className="absolute top-4 right-4 z-50">
         <CityInfoPanel 
           city={{
             name: currentCity.name,
@@ -153,7 +152,7 @@ const CultureMap = ({ initialLocation, availableCities }: CultureMapProps) => {
       </div>
 
       {/* Map Controls Stack - Bottom left, with spacing */}
-      <div className="absolute bottom-4 left-4 z-40 flex flex-col space-y-2">
+      <div className="absolute bottom-4 left-4 z-50 flex flex-col space-y-3">
         <MapFilters 
           selectedFilters={selectedFilters}
           onFiltersChange={setSelectedFilters}
