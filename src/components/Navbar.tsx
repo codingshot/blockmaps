@@ -2,7 +2,7 @@
 import { useNavigate, useLocation } from 'react-router-dom';
 import { usePrivy } from '@privy-io/react-auth';
 import { Button } from '@/components/ui/button';
-import { Search } from 'lucide-react';
+import { Search, Menu, X } from 'lucide-react';
 import { useState } from 'react';
 import AuthModal from './AuthModal';
 import MapSearch from './MapSearch';
@@ -13,6 +13,13 @@ import {
   DialogTitle,
   DialogTrigger,
 } from '@/components/ui/dialog';
+import {
+  Sheet,
+  SheetContent,
+  SheetHeader,
+  SheetTitle,
+  SheetTrigger,
+} from '@/components/ui/sheet';
 
 const Navbar = () => {
   const navigate = useNavigate();
@@ -20,6 +27,7 @@ const Navbar = () => {
   const { ready, authenticated, logout } = usePrivy();
   const [showAuthModal, setShowAuthModal] = useState(false);
   const [showMobileSearch, setShowMobileSearch] = useState(false);
+  const [showMobileMenu, setShowMobileMenu] = useState(false);
 
   const handleAuthAction = async () => {
     if (authenticated) {
@@ -27,12 +35,17 @@ const Navbar = () => {
     } else {
       setShowAuthModal(true);
     }
+    setShowMobileMenu(false);
   };
 
   const handleLocationSelect = (lat: number, lng: number, name: string) => {
     console.log('Location selected:', { lat, lng, name });
-    // You can add navigation logic here if needed
     setShowMobileSearch(false);
+  };
+
+  const handleExploreClick = () => {
+    navigate('/explore');
+    setShowMobileMenu(false);
   };
 
   const isMapPage = location.pathname === '/' || location.pathname.includes('/city/');
@@ -67,7 +80,8 @@ const Navbar = () => {
             </div>
           )}
           
-          <div className="flex items-center space-x-2">
+          {/* Desktop Menu */}
+          <div className="hidden md:flex items-center space-x-2">
             {/* Mobile Search Button - only on map pages */}
             {isMapPage && (
               <Dialog open={showMobileSearch} onOpenChange={setShowMobileSearch}>
@@ -75,7 +89,7 @@ const Navbar = () => {
                   <Button 
                     variant="outline" 
                     size="sm"
-                    className="md:hidden flex items-center justify-center w-9 h-9 p-0 border-2 border-gradient-to-r from-blue-400 to-purple-400 hover:bg-gradient-to-r hover:from-blue-50 hover:to-purple-50"
+                    className="flex items-center justify-center w-9 h-9 p-0 border-2 border-gradient-to-r from-blue-400 to-purple-400 hover:bg-gradient-to-r hover:from-blue-50 hover:to-purple-50"
                   >
                     <Search className="w-4 h-4 text-blue-600" />
                   </Button>
@@ -90,7 +104,7 @@ const Navbar = () => {
             )}
 
             <Button 
-              onClick={() => navigate('/explore')}
+              onClick={handleExploreClick}
               variant="outline" 
               size="sm"
               className="flex items-center space-x-2 border-2 border-gradient-to-r from-blue-400 to-purple-400 hover:bg-gradient-to-r hover:from-blue-50 hover:to-purple-50 text-blue-600 hover:text-purple-600 transition-all duration-300"
@@ -113,15 +127,85 @@ const Navbar = () => {
                 {authenticated ? (
                   <>
                     <span className="text-lg">🥷</span>
-                    <span className="hidden sm:inline">Logout</span>
+                    <span>Logout</span>
                   </>
                 ) : (
-                  <>
-                    <span>Connect</span>
-                  </>
+                  <span>Connect</span>
                 )}
               </Button>
             )}
+          </div>
+
+          {/* Mobile Menu */}
+          <div className="flex md:hidden items-center space-x-2">
+            {/* Mobile Search Button - only on map pages */}
+            {isMapPage && (
+              <Dialog open={showMobileSearch} onOpenChange={setShowMobileSearch}>
+                <DialogTrigger asChild>
+                  <Button 
+                    variant="outline" 
+                    size="sm"
+                    className="flex items-center justify-center w-9 h-9 p-0 border-2 border-gradient-to-r from-blue-400 to-purple-400 hover:bg-gradient-to-r hover:from-blue-50 hover:to-purple-50"
+                  >
+                    <Search className="w-4 h-4 text-blue-600" />
+                  </Button>
+                </DialogTrigger>
+                <DialogContent className="sm:max-w-md">
+                  <DialogHeader>
+                    <DialogTitle>Search Location</DialogTitle>
+                  </DialogHeader>
+                  <MapSearch onLocationSelect={handleLocationSelect} />
+                </DialogContent>
+              </Dialog>
+            )}
+
+            {/* Hamburger Menu */}
+            <Sheet open={showMobileMenu} onOpenChange={setShowMobileMenu}>
+              <SheetTrigger asChild>
+                <Button
+                  variant="outline"
+                  size="sm"
+                  className="flex items-center justify-center w-9 h-9 p-0 border-2 border-gradient-to-r from-blue-400 to-purple-400 hover:bg-gradient-to-r hover:from-blue-50 hover:to-purple-50"
+                >
+                  <Menu className="w-4 h-4 text-blue-600" />
+                </Button>
+              </SheetTrigger>
+              <SheetContent side="right" className="w-72">
+                <SheetHeader>
+                  <SheetTitle className="text-left">Menu</SheetTitle>
+                </SheetHeader>
+                <div className="flex flex-col space-y-4 mt-6">
+                  <Button 
+                    onClick={handleExploreClick}
+                    variant="outline" 
+                    className="w-full justify-start border-2 border-gradient-to-r from-blue-400 to-purple-400 hover:bg-gradient-to-r hover:from-blue-50 hover:to-purple-50 text-blue-600 hover:text-purple-600 transition-all duration-300"
+                  >
+                    Explore Cities
+                  </Button>
+
+                  {ready && (
+                    <Button
+                      onClick={handleAuthAction}
+                      variant={authenticated ? "ghost" : "default"}
+                      className={`w-full justify-start transition-all duration-300 ${
+                        authenticated 
+                          ? "text-purple-600 hover:bg-purple-50" 
+                          : "bg-gradient-to-r from-blue-500 to-purple-600 hover:from-blue-600 hover:to-purple-700 text-white"
+                      }`}
+                    >
+                      {authenticated ? (
+                        <>
+                          <span className="text-lg mr-2">🥷</span>
+                          <span>Logout</span>
+                        </>
+                      ) : (
+                        <span>Connect Wallet</span>
+                      )}
+                    </Button>
+                  )}
+                </div>
+              </SheetContent>
+            </Sheet>
           </div>
         </div>
       </header>

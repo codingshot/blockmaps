@@ -74,7 +74,7 @@ const MapFilters = ({ selectedFilters, onFiltersChange }: MapFiltersProps) => {
   // Minimized state - just show a small square with filter icon
   if (isMinimized) {
     return (
-      <div className="bg-white/95 backdrop-blur-md rounded-lg shadow-xl border border-white/20 mb-0">
+      <div className="bg-white/95 backdrop-blur-md rounded-lg shadow-xl border border-white/20 relative">
         <button
           onClick={() => setIsMinimized(false)}
           className="flex items-center justify-center p-3 hover:bg-gray-100 rounded-lg transition-colors"
@@ -91,13 +91,13 @@ const MapFilters = ({ selectedFilters, onFiltersChange }: MapFiltersProps) => {
   }
 
   return (
-    <div className="bg-white/95 backdrop-blur-md rounded-xl shadow-xl border border-white/20 w-80 max-w-sm mb-0">
+    <div className="bg-white/95 backdrop-blur-md rounded-xl shadow-xl border border-white/20 w-full max-w-xs sm:max-w-sm md:w-80">
       {/* Header */}
-      <div className="p-4 border-b border-gray-200">
-        <div className="flex items-center justify-between mb-3">
+      <div className="p-3 sm:p-4 border-b border-gray-200">
+        <div className="flex items-center justify-between mb-2 sm:mb-3">
           <div className="flex items-center space-x-2">
-            <Filter className="w-5 h-5 text-gray-600" />
-            <span className="font-semibold text-gray-800">Map Filters</span>
+            <Filter className="w-4 h-4 sm:w-5 sm:h-5 text-gray-600" />
+            <span className="font-semibold text-gray-800 text-sm sm:text-base">Map Filters</span>
             {selectedFilters.length > 0 && (
               <span className="bg-blue-500 text-white text-xs px-2 py-1 rounded-full">
                 {selectedFilters.length}
@@ -112,8 +112,8 @@ const MapFilters = ({ selectedFilters, onFiltersChange }: MapFiltersProps) => {
           </button>
         </div>
 
-        {/* Quick Filters - Made thinner and more compact */}
-        <div className="flex flex-wrap gap-1 mb-3">
+        {/* Quick Filters - More compact on mobile */}
+        <div className="flex flex-wrap gap-1 mb-2 sm:mb-3">
           {quickFilters.map(filter => {
             const filterData = allFilters.find(f => f.id === filter.id);
             if (!filterData) return null;
@@ -122,14 +122,14 @@ const MapFilters = ({ selectedFilters, onFiltersChange }: MapFiltersProps) => {
               <button
                 key={filter.id}
                 onClick={() => toggleFilter(filter.id)}
-                className={`flex items-center space-x-1 px-2 py-0.5 rounded-full text-xs font-medium transition-all h-6 ${
+                className={`flex items-center space-x-1 px-1.5 sm:px-2 py-0.5 rounded-full text-xs font-medium transition-all h-6 ${
                   selectedFilters.includes(filter.id)
                     ? 'bg-blue-500 text-white shadow-md'
                     : 'bg-gray-100 hover:bg-gray-200 text-gray-700'
                 }`}
               >
                 <span className="text-xs">{filter.emoji}</span>
-                <span className="hidden sm:inline text-xs">{filterData.label}</span>
+                <span className="hidden xs:inline text-xs">{filterData.label}</span>
               </button>
             );
           })}
@@ -151,18 +151,18 @@ const MapFilters = ({ selectedFilters, onFiltersChange }: MapFiltersProps) => {
         )}
       </div>
 
-      {/* All Categories with Scroll */}
-      <ScrollArea className="h-40">
+      {/* All Categories with Scroll - Reduced height on mobile */}
+      <ScrollArea className="h-32 sm:h-40">
         <div className="p-2 space-y-2">
           {categories.map(category => (
             <div key={category} className="space-y-2">
-              <h4 className="text-sm font-semibold text-gray-700">{category}</h4>
+              <h4 className="text-xs sm:text-sm font-semibold text-gray-700">{category}</h4>
               <div className="flex flex-wrap gap-1">
                 {allFilters.filter(f => f.category === category).map(filter => (
                   <button
                     key={filter.id}
                     onClick={() => toggleFilter(filter.id)}
-                    className={`flex items-center space-x-1 px-2 py-0.5 rounded-full text-xs font-medium transition-all h-6 ${
+                    className={`flex items-center space-x-1 px-1.5 sm:px-2 py-0.5 rounded-full text-xs font-medium transition-all h-6 ${
                       selectedFilters.includes(filter.id)
                         ? 'bg-blue-500 text-white shadow-md'
                         : 'bg-gray-50 hover:bg-gray-100 text-gray-700 border border-gray-200'
