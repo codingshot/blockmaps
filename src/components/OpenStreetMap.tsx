@@ -23,19 +23,37 @@ interface OpenStreetMapProps {
     type: string;
   }>;
   onMapClick?: (lat: number, lng: number) => void;
+  onLocationClick?: () => void;
 }
 
 const OpenStreetMap: React.FC<OpenStreetMapProps> = ({
   center,
   zoom,
   markers,
-  onMapClick
+  onMapClick,
+  onLocationClick
 }) => {
   const mapRef = useRef<HTMLDivElement>(null);
   const mapInstanceRef = useRef<L.Map | null>(null);
   const markersRef = useRef<L.Marker[]>([]);
+  const heatmapLayersRef = useRef<L.LayerGroup[]>([]);
+  const textAnnotationsRef = useRef<L.LayerGroup | null>(null);
   const [isLoading, setIsLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
+
+  // Heatmap types that should be displayed as overlays
+  const heatmapTypes = ['crime-rate', 'safety', 'property-value', 'wealth', 'noise', 'air-quality'];
+
+  // Text annotations for different regions
+  const textAnnotations = [
+    { lat: 43.5520, lng: 7.0170, text: 'Old Town', minZoom: 14 },
+    { lat: 43.5510, lng: 7.0160, text: 'Nightlife District', minZoom: 15 },
+    { lat: 43.5540, lng: 7.0180, text: 'Shopping Area', minZoom: 14 },
+    { lat: 43.5500, lng: 7.0150, text: 'Beach Promenade', minZoom: 13 },
+    { lat: 43.5530, lng: 7.0165, text: 'Cultural Quarter', minZoom: 15 },
+    { lat: 43.5485, lng: 7.0155, text: 'Luxury District', minZoom: 14 },
+    { lat: 43.5525, lng: 7.0185, text: 'Marina', minZoom: 14 },
+  ];
 
   // Initialize map
   useEffect(() => {
@@ -49,17 +67,16 @@ const OpenStreetMap: React.FC<OpenStreetMapProps> = ({
 
       console.log('Initializing map with center:', center, 'zoom:', zoom);
 
-      // Create map with better mobile settings
+      // Create map with better mobile settings and higher z-index for controls
       const map = L.map(mapRef.current, {
         center: [center.lat, center.lng],
         zoom: zoom,
-        zoomControl: false, // We have custom zoom controls
+        zoomControl: false,
         attributionControl: true,
         scrollWheelZoom: true,
         touchZoom: true,
         doubleClickZoom: true,
         dragging: true,
-        tap: true,
         tapTolerance: 15,
         maxZoom: 19,
         minZoom: 2,
@@ -85,7 +102,6 @@ const OpenStreetMap: React.FC<OpenStreetMapProps> = ({
 
       tileLayer.on('tileerror', (e) => {
         console.warn('Tile error:', e);
-        // Don't set error state for individual tile failures
       });
 
       tileLayer.addTo(map);
@@ -96,6 +112,14 @@ const OpenStreetMap: React.FC<OpenStreetMapProps> = ({
           onMapClick(e.latlng.lat, e.latlng.lng);
         });
       }
+
+      // Initialize text annotations layer
+      textAnnotationsRef.current = L.layerGroup().addTo(map);
+
+      // Handle zoom changes for text annotations
+      map.on('zoomend', () => {
+        updateTextAnnotations();
+      });
 
       // Store map reference
       mapInstanceRef.current = map;
@@ -119,6 +143,38 @@ const OpenStreetMap: React.FC<OpenStreetMapProps> = ({
     }
   }, []);
 
+  // Update text annotations based on zoom level
+  const updateTextAnnotations = () => {
+    if (!mapInstanceRef.current || !textAnnotationsRef.current) return;
+
+    const currentZoom = mapInstanceRef.current.getZoom();
+    textAnnotationsRef.current.clearLayers();
+
+    textAnnotations.forEach(annotation => {
+      if (currentZoom >= annotation.minZoom) {
+        const textMarker = L.marker([annotation.lat, annotation.lng], {
+          icon: L.divIcon({
+            html: `<div style="
+              font-family: Calibri, sans-serif;
+              color: white;
+              font-size: 12px;
+              font-weight: bold;
+              text-shadow: 1px 1px 0 black, -1px -1px 0 black, 1px -1px 0 black, -1px 1px 0 black;
+              white-space: nowrap;
+              pointer-events: none;
+              z-index: 500;
+            ">${annotation.text}</div>`,
+            className: 'text-annotation',
+            iconSize: [0, 0],
+            iconAnchor: [0, 0],
+          }),
+          zIndexOffset: 500
+        });
+        textAnnotationsRef.current!.addLayer(textMarker);
+      }
+    });
+  };
+
   // Update map center and zoom
   useEffect(() => {
     if (mapInstanceRef.current) {
@@ -127,22 +183,108 @@ const OpenStreetMap: React.FC<OpenStreetMapProps> = ({
     }
   }, [center.lat, center.lng, zoom]);
 
-  // Update markers
+  // Create granular heatmap overlay with much smaller grid
+  const createHeatmapOverlay = (type: string, data: any[]) => {
+    if (!mapInstanceRef.current) return null;
+
+    const layerGroup = L.layerGroup();
+    
+    // Create much smaller, more granular grid
+    const bounds = mapInstanceRef.current.getBounds();
+    const gridSize = 0.0005; // Much smaller grid size for higher granularity
+    
+    for (let lat = bounds.getSouth(); lat < bounds.getNorth(); lat += gridSize) {
+      for (let lng = bounds.getWest(); lng < bounds.getEast(); lng += gridSize) {
+        // Calculate intensity based on proximity to data points
+        let intensity = 0;
+        data.forEach(point => {
+          const distance = Math.sqrt(Math.pow(lat - point.lat, 2) + Math.pow(lng - point.lng, 2));
+          if (distance < 0.003) { // Smaller influence radius for more precision
+            intensity += Math.max(0, 1 - distance * 300);
+          }
+        });
+
+        // Only create squares where there's actual data
+        if (intensity > 0.1) { // Higher threshold to avoid too many empty squares
+          const color = getHeatmapColor(type, Math.min(intensity, 1));
+          const rectangle = L.rectangle(
+            [[lat, lng], [lat + gridSize, lng + gridSize]],
+            {
+              color: color,
+              fillColor: color,
+              fillOpacity: Math.min(intensity * 0.5, 0.4),
+              weight: 0,
+              interactive: false,
+              pane: 'overlayPane'
+            }
+          );
+          // Set lower z-index for heatmap overlays to ensure they stay below markers
+          (rectangle as any).options.zIndexOffset = -1000;
+          layerGroup.addLayer(rectangle);
+        }
+      }
+    }
+
+    return layerGroup;
+  };
+
+  // Get unique color for each heatmap type and intensity
+  const getHeatmapColor = (type: string, intensity: number) => {
+    const colors = {
+      'crime-rate': `rgb(${Math.floor(255 * intensity)}, ${Math.floor(50 * (1-intensity))}, 0)`, // Red-orange gradient
+      'safety': `rgb(0, ${Math.floor(200 * intensity)}, ${Math.floor(100 * intensity)})`, // Green gradient
+      'property-value': `rgb(${Math.floor(100 * intensity)}, ${Math.floor(150 * intensity)}, ${Math.floor(255 * intensity)})`, // Blue gradient
+      'wealth': `rgb(${Math.floor(255 * intensity)}, ${Math.floor(200 * intensity)}, 0)`, // Gold gradient
+      'noise': `rgb(${Math.floor(150 * intensity)}, 0, ${Math.floor(200 * intensity)})`, // Purple gradient
+      'air-quality': `rgb(0, ${Math.floor(255 * intensity)}, ${Math.floor(200 * intensity)})`  // Cyan gradient
+    };
+    return colors[type as keyof typeof colors] || `rgb(128, 128, 128)`;
+  };
+
+  // Update markers and heatmaps
   useEffect(() => {
     if (!mapInstanceRef.current) return;
 
     console.log('Updating markers, count:', markers.length);
 
-    // Clear existing markers
+    // Clear existing markers and heatmaps
     markersRef.current.forEach(marker => {
       mapInstanceRef.current?.removeLayer(marker);
     });
     markersRef.current = [];
 
-    // Add new markers
+    heatmapLayersRef.current.forEach(layer => {
+      mapInstanceRef.current?.removeLayer(layer);
+    });
+    heatmapLayersRef.current = [];
+
+    // Separate heatmap data from regular markers
+    const heatmapData: { [key: string]: any[] } = {};
+    const regularMarkers: any[] = [];
+
     markers.forEach(markerData => {
+      if (heatmapTypes.includes(markerData.type)) {
+        if (!heatmapData[markerData.type]) {
+          heatmapData[markerData.type] = [];
+        }
+        heatmapData[markerData.type].push(markerData);
+      } else {
+        regularMarkers.push(markerData);
+      }
+    });
+
+    // Create heatmap overlays first (so they render below markers)
+    Object.entries(heatmapData).forEach(([type, data]) => {
+      const heatmapLayer = createHeatmapOverlay(type, data);
+      if (heatmapLayer) {
+        heatmapLayer.addTo(mapInstanceRef.current!);
+        heatmapLayersRef.current.push(heatmapLayer);
+      }
+    });
+
+    // Add regular markers with high z-index to ensure they appear above heatmaps
+    regularMarkers.forEach(markerData => {
       try {
-        // Create custom icon using emoji
         const customIcon = L.divIcon({
           html: `<div style="
             background: white;
@@ -155,6 +297,8 @@ const OpenStreetMap: React.FC<OpenStreetMapProps> = ({
             font-size: 16px;
             box-shadow: 0 2px 4px rgba(0,0,0,0.2);
             border: 2px solid #3b82f6;
+            z-index: 2000;
+            position: relative;
           ">${markerData.emoji}</div>`,
           className: 'custom-emoji-marker',
           iconSize: [30, 30],
@@ -162,10 +306,10 @@ const OpenStreetMap: React.FC<OpenStreetMapProps> = ({
         });
 
         const marker = L.marker([markerData.lat, markerData.lng], {
-          icon: customIcon
+          icon: customIcon,
+          zIndexOffset: 2000 // High z-index to ensure markers appear above heatmaps
         }).addTo(mapInstanceRef.current!);
 
-        // Add popup
         marker.bindPopup(`
           <div style="text-align: center; padding: 5px;">
             <div style="font-size: 20px; margin-bottom: 5px;">${markerData.emoji}</div>
@@ -179,6 +323,9 @@ const OpenStreetMap: React.FC<OpenStreetMapProps> = ({
         console.error('Error creating marker:', err, markerData);
       }
     });
+
+    // Update text annotations after markers are added
+    updateTextAnnotations();
   }, [markers]);
 
   if (error) {
@@ -202,14 +349,14 @@ const OpenStreetMap: React.FC<OpenStreetMapProps> = ({
     <div className="relative w-full h-full">
       <div 
         ref={mapRef} 
-        className="w-full h-full rounded-lg overflow-hidden touch-pan-x touch-pan-y"
+        className="w-full h-full rounded-lg overflow-hidden"
         style={{ 
           minHeight: '300px',
           touchAction: 'pan-x pan-y'
         }}
       />
       {isLoading && (
-        <div className="absolute inset-0 bg-white/80 flex items-center justify-center rounded-lg">
+        <div className="absolute inset-0 bg-white/80 flex items-center justify-center rounded-lg z-50">
           <div className="text-center">
             <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-blue-500 mx-auto mb-2"></div>
             <div className="text-sm text-gray-600">Loading map...</div>

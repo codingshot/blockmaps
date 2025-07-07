@@ -1,11 +1,13 @@
-
 import React, { useState, useEffect, useCallback } from 'react';
 import OpenStreetMap from '@/components/OpenStreetMap';
 import MapZoomControls from '@/components/MapZoomControls';
 import MapFilters from '@/components/MapFilters';
 import { Plus } from 'lucide-react';
 import CityInfoPanel from './CityInfoPanel';
+import AddPointForm from './AddPointForm';
+import AuthModal from './AuthModal';
 import { Button } from '@/components/ui/button';
+import { usePrivy } from '@privy-io/react-auth';
 
 interface CultureMapProps {
   initialLocation: { lat: number; lng: number } | null;
@@ -19,11 +21,14 @@ interface CultureMapProps {
 }
 
 const CultureMap = ({ initialLocation, availableCities }: CultureMapProps) => {
+  const { authenticated } = usePrivy();
   const [mapCenter, setMapCenter] = useState(initialLocation || availableCities[0].coordinates);
-  const [zoomLevel, setZoomLevel] = useState(13);
+  const [zoomLevel, setZoomLevel] = useState(15); // Increased from 13 to 15 for city-focused view
   const [cultureData, setCultureData] = useState<any[]>([]);
   const [visibleMarkers, setVisibleMarkers] = useState<any[]>([]);
   const [showAddPointForm, setShowAddPointForm] = useState(false);
+  const [showAuthModal, setShowAuthModal] = useState(false);
+  const [selectedLocation, setSelectedLocation] = useState<{ lat: number; lng: number } | null>(null);
   const [selectedFilters, setSelectedFilters] = useState<string[]>([]);
 
   // Complete culture data for Cannes
@@ -109,7 +114,35 @@ const CultureMap = ({ initialLocation, availableCities }: CultureMapProps) => {
 
   const handleMapClick = useCallback((lat: number, lng: number) => {
     console.log('Map clicked at:', lat, lng);
+    setSelectedLocation({ lat, lng });
   }, []);
+
+  const handleLocationClick = useCallback(() => {
+    const currentCity = availableCities.find(city => 
+      Math.abs(city.coordinates.lat - mapCenter.lat) < 0.01 && 
+      Math.abs(city.coordinates.lng - mapCenter.lng) < 0.01
+    ) || availableCities[0];
+    
+    setMapCenter(currentCity.coordinates);
+    setZoomLevel(15); // Changed from 11 to 15 for better city focus
+  }, [availableCities, mapCenter]);
+
+  const handlePlusClick = () => {
+    if (authenticated) {
+      setShowAddPointForm(true);
+    } else {
+      setShowAuthModal(true);
+    }
+  };
+
+  const handleAddPoint = (pointData: any) => {
+    const newPoint = {
+      ...pointData,
+      id: Date.now().toString(),
+    };
+    setCultureData(prev => [...prev, newPoint]);
+    console.log('Added new point:', newPoint);
+  };
 
   const currentCity = availableCities.find(city => 
     Math.abs(city.coordinates.lat - mapCenter.lat) < 0.01 && 
@@ -119,9 +152,9 @@ const CultureMap = ({ initialLocation, availableCities }: CultureMapProps) => {
   return (
     <div className="relative w-full h-full bg-gradient-to-br from-blue-50 to-purple-50">
       {/* Add Point Button - Bottom right */}
-      <div className="absolute bottom-4 right-4 z-40">
+      <div className="absolute bottom-4 right-4 z-50">
         <Button
-          onClick={() => setShowAddPointForm(true)}
+          onClick={handlePlusClick}
           className="bg-blue-600 hover:bg-blue-700 text-white rounded-full p-3"
         >
           <Plus className="w-5 h-5" />
@@ -129,7 +162,7 @@ const CultureMap = ({ initialLocation, availableCities }: CultureMapProps) => {
       </div>
 
       {/* City Info Panel - Top right */}
-      <div className="absolute top-4 right-4 z-40">
+      <div className="absolute top-4 right-4 z-50">
         <CityInfoPanel 
           city={{
             name: currentCity.name,
@@ -138,18 +171,17 @@ const CultureMap = ({ initialLocation, availableCities }: CultureMapProps) => {
             coordinates: currentCity.coordinates,
             description: currentCity.description
           }}
+          onLocationClick={handleLocationClick}
         />
       </div>
 
-      {/* Map Controls Stack - Bottom left, aligned and flush */}
-      <div className="absolute bottom-4 left-4 z-40 flex flex-col space-y-0">
+      {/* Map Controls Stack - Bottom left, with spacing */}
+      <div className="absolute bottom-4 left-4 z-50 flex flex-col space-y-3">
         <MapFilters 
           selectedFilters={selectedFilters}
           onFiltersChange={setSelectedFilters}
         />
-        <div className="z-30">
-          <MapZoomControls onZoomIn={handleZoomIn} onZoomOut={handleZoomOut} />
-        </div>
+        <MapZoomControls onZoomIn={handleZoomIn} onZoomOut={handleZoomOut} />
       </div>
 
       {/* OpenStreetMap Component */}
@@ -159,8 +191,23 @@ const CultureMap = ({ initialLocation, availableCities }: CultureMapProps) => {
           zoom={zoomLevel}
           markers={visibleMarkers}
           onMapClick={handleMapClick}
+          onLocationClick={handleLocationClick}
         />
       </div>
+
+      {/* Add Point Form */}
+      <AddPointForm
+        isOpen={showAddPointForm}
+        onClose={() => setShowAddPointForm(false)}
+        onSubmit={handleAddPoint}
+        selectedLocation={selectedLocation}
+      />
+
+      {/* Auth Modal */}
+      <AuthModal
+        isOpen={showAuthModal}
+        onClose={() => setShowAuthModal(false)}
+      />
     </div>
   );
 };

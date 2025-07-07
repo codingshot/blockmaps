@@ -1,28 +1,34 @@
 
+import React from 'react';
 interface CityInfoPanelProps {
   city: {
     name: string;
-    country?: string;
-    countryFlag?: string;
-    coordinates: { lat: number; lng: number };
-    description: string;
-    stats?: {
-      contributors: number;
-      dataPoints: number;
-      lastUpdate: string;
+    country: string;
+    countryFlag: string;
+    coordinates: {
+      lat: number;
+      lng: number;
     };
+    description: string;
   };
+  onLocationClick?: () => void;
 }
-
-const CityInfoPanel = ({ city }: CityInfoPanelProps) => {
-  return (
-    <div className="bg-white/95 backdrop-blur-md rounded-xl p-3 shadow-xl border border-white/20 max-w-sm">
-      <div className="flex items-center space-x-2">
-        {city.countryFlag && <span className="text-lg">{city.countryFlag}</span>}
-        <h3 className="font-bold text-gray-900 text-sm whitespace-nowrap">{city.name}</h3>
+const CityInfoPanel = ({
+  city,
+  onLocationClick
+}: CityInfoPanelProps) => {
+  return <div onClick={onLocationClick} className="bg-white/95 backdrop-blur-md rounded-xl shadow-xl border border-white/20 p-4 w-auto cursor-pointer hover:bg-white/100 transition-all duration-200 hover:shadow-2xl z-50 relative">
+      {/* City Header */}
+      <div className="flex items-center justify-between">
+        <div className="flex items-center space-x-3">
+          <span className="text-3xl">{city.countryFlag}</span>
+          <div>
+            <h2 className="text-lg font-bold text-gray-800">{city.name}</h2>
+            
+          </div>
+        </div>
+        
       </div>
-    </div>
-  );
+    </div>;
 };
-
 export default CityInfoPanel;
