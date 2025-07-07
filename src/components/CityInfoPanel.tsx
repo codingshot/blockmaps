@@ -1,3 +1,4 @@
+
 import React from 'react';
 interface CityInfoPanelProps {
   city: {
@@ -16,7 +17,7 @@ const CityInfoPanel = ({
   city,
   onLocationClick
 }: CityInfoPanelProps) => {
-  return <div onClick={onLocationClick} className="bg-white/95 backdrop-blur-md rounded-xl shadow-xl border border-white/20 p-4 w-64 sm:w-72 cursor-pointer hover:bg-white/100 transition-all duration-200 hover:shadow-2xl z-50 relative">
+  return <div onClick={onLocationClick} className="bg-white/95 backdrop-blur-md rounded-xl shadow-xl border border-white/20 p-4 w-auto cursor-pointer hover:bg-white/100 transition-all duration-200 hover:shadow-2xl z-50 relative">
       {/* City Header */}
       <div className="flex items-center justify-between">
         <div className="flex items-center space-x-3">
