@@ -81,7 +81,7 @@ const Navbar = () => {
               <h1 className="text-xl font-bold bg-gradient-to-r from-blue-600 via-purple-600 to-pink-600 bg-clip-text text-transparent">
                 blockmaps
               </h1>
-              <p className="text-xs bg-gradient-to-r from-green-600 to-orange-600 bg-clip-text text-transparent font-medium">culture mapped live</p>
+              <p className="text-xs bg-gradient-to-r from-green-600 to-orange-600 bg-clip-text text-transparent font-medium hidden sm:block">culture mapped live</p>
             </div>
           </div>
           
