@@ -1,7 +1,8 @@
-
 import React, { useEffect, useRef, useState } from 'react';
 import L from 'leaflet';
 import 'leaflet/dist/leaflet.css';
+import AnnotationModal from './AnnotationModal';
+import { usePrivy } from '@privy-io/react-auth';
 
 // Fix for default markers
 delete (L.Icon.Default.prototype as any)._getIconUrl;
@@ -33,6 +34,7 @@ const OpenStreetMap: React.FC<OpenStreetMapProps> = ({
   onMapClick,
   onLocationClick
 }) => {
+  const { authenticated, user } = usePrivy();
   const mapRef = useRef<HTMLDivElement>(null);
   const mapInstanceRef = useRef<L.Map | null>(null);
   const markersRef = useRef<L.Marker[]>([]);
@@ -40,20 +42,85 @@ const OpenStreetMap: React.FC<OpenStreetMapProps> = ({
   const textAnnotationsRef = useRef<L.LayerGroup | null>(null);
   const [isLoading, setIsLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
+  const [selectedAnnotation, setSelectedAnnotation] = useState<any>(null);
+  const [showAnnotationModal, setShowAnnotationModal] = useState(false);
 
   // Heatmap types that should be displayed as overlays
   const heatmapTypes = ['crime-rate', 'safety', 'property-value', 'wealth', 'noise', 'air-quality'];
 
-  // Text annotations for different regions
-  const textAnnotations = [
-    { lat: 43.5520, lng: 7.0170, text: 'Old Town', minZoom: 14 },
-    { lat: 43.5510, lng: 7.0160, text: 'Nightlife District', minZoom: 15 },
-    { lat: 43.5540, lng: 7.0180, text: 'Shopping Area', minZoom: 14 },
-    { lat: 43.5500, lng: 7.0150, text: 'Beach Promenade', minZoom: 13 },
-    { lat: 43.5530, lng: 7.0165, text: 'Cultural Quarter', minZoom: 15 },
-    { lat: 43.5485, lng: 7.0155, text: 'Luxury District', minZoom: 14 },
-    { lat: 43.5525, lng: 7.0185, text: 'Marina', minZoom: 14 },
-  ];
+    // Enhanced text annotations with upvote data
+    const [textAnnotations, setTextAnnotations] = useState([
+      { 
+        id: 'old-town',
+        lat: 43.5520, 
+        lng: 7.0170, 
+        text: 'Old Town', 
+        description: 'Historic district with charming cobblestone streets and traditional French architecture',
+        minZoom: 14,
+        upvotes: 12,
+        upvotedBy: [] as string[]
+      },
+      { 
+        id: 'nightlife',
+        lat: 43.5510, 
+        lng: 7.0160, 
+        text: 'Nightlife District', 
+        description: 'Vibrant area with bars, clubs, and late-night entertainment venues',
+        minZoom: 15,
+        upvotes: 8,
+        upvotedBy: [] as string[]
+      },
+      { 
+        id: 'shopping',
+        lat: 43.5540, 
+        lng: 7.0180, 
+        text: 'Shopping Area', 
+        description: 'Premium shopping district with luxury boutiques and designer stores',
+        minZoom: 14,
+        upvotes: 15,
+        upvotedBy: [] as string[]
+      },
+      { 
+        id: 'beach',
+        lat: 43.5500, 
+        lng: 7.0150, 
+        text: 'Beach Promenade', 
+        description: 'Beautiful waterfront promenade perfect for walking and beach activities',
+        minZoom: 13,
+        upvotes: 20,
+        upvotedBy: [] as string[]
+      },
+      { 
+        id: 'cultural',
+        lat: 43.5530, 
+        lng: 7.0165, 
+        text: 'Cultural Quarter', 
+        description: 'Area rich in museums, galleries, and cultural attractions',
+        minZoom: 15,
+        upvotes: 6,
+        upvotedBy: [] as string[]
+      },
+      { 
+        id: 'luxury',
+        lat: 43.5485, 
+        lng: 7.0155, 
+        text: 'Luxury District', 
+        description: 'Exclusive area with high-end hotels, restaurants, and luxury services',
+        minZoom: 14,
+        upvotes: 18,
+        upvotedBy: [] as string[]
+      },
+      { 
+        id: 'marina',
+        lat: 43.5525, 
+        lng: 7.0185, 
+        text: 'Marina', 
+        description: 'Prestigious marina with luxury yachts and waterfront dining',
+        minZoom: 14,
+        upvotes: 10,
+        upvotedBy: [] as string[]
+      },
+    ]);
 
   // Initialize map
   useEffect(() => {
@@ -143,7 +210,7 @@ const OpenStreetMap: React.FC<OpenStreetMapProps> = ({
     }
   }, []);
 
-  // Update text annotations based on zoom level
+  // Update text annotations based on zoom level with upvote styling
   const updateTextAnnotations = () => {
     if (!mapInstanceRef.current || !textAnnotationsRef.current) return;
 
@@ -152,36 +219,88 @@ const OpenStreetMap: React.FC<OpenStreetMapProps> = ({
 
     textAnnotations.forEach(annotation => {
       if (currentZoom >= annotation.minZoom) {
+        // Calculate font size based on upvotes (base size 12px, +1px per 5 upvotes, max 20px)
+        const fontSize = Math.min(12 + Math.floor(annotation.upvotes / 5), 20);
+        
         const textMarker = L.marker([annotation.lat, annotation.lng], {
           icon: L.divIcon({
             html: `<div style="
               font-family: Calibri, sans-serif;
               color: white;
-              font-size: 12px;
+              font-size: ${fontSize}px;
               font-weight: bold;
               text-shadow: 1px 1px 0 black, -1px -1px 0 black, 1px -1px 0 black, -1px 1px 0 black;
               white-space: nowrap;
-              pointer-events: none;
+              cursor: pointer;
               z-index: 500;
+              padding: 2px 4px;
+              background: rgba(59, 130, 246, 0.1);
+              border-radius: 4px;
+              backdrop-filter: blur(2px);
             ">${annotation.text}</div>`,
-            className: 'text-annotation',
+            className: 'text-annotation clickable-annotation',
             iconSize: [0, 0],
             iconAnchor: [0, 0],
           }),
           zIndexOffset: 500
         });
+
+        // Add click handler for text annotations
+        textMarker.on('click', () => {
+          const hasUserUpvoted = user?.id ? annotation.upvotedBy.includes(user.id) : false;
+          setSelectedAnnotation({
+            ...annotation,
+            hasUserUpvoted
+          });
+          setShowAnnotationModal(true);
+        });
+
         textAnnotationsRef.current!.addLayer(textMarker);
       }
     });
   };
 
-  // Update map center and zoom
-  useEffect(() => {
-    if (mapInstanceRef.current) {
-      console.log('Updating map center to:', center, 'zoom:', zoom);
-      mapInstanceRef.current.setView([center.lat, center.lng], zoom);
+  const handleUpvote = (annotationId: string) => {
+    if (!authenticated || !user?.id) return;
+
+    setTextAnnotations(prev => prev.map(annotation => {
+      if (annotation.id === annotationId) {
+        const hasUpvoted = annotation.upvotedBy.includes(user.id);
+        if (hasUpvoted) {
+          // Remove upvote
+          return {
+            ...annotation,
+            upvotes: annotation.upvotes - 1,
+            upvotedBy: annotation.upvotedBy.filter(id => id !== user.id)
+          };
+        } else {
+          // Add upvote
+          return {
+            ...annotation,
+            upvotes: annotation.upvotes + 1,
+            upvotedBy: [...annotation.upvotedBy, user.id]
+          };
+        }
+      }
+      return annotation;
+    }));
+
+    // Update the selected annotation for the modal
+    const updatedAnnotation = textAnnotations.find(a => a.id === annotationId);
+    if (updatedAnnotation && user?.id) {
+      const hasUpvoted = updatedAnnotation.upvotedBy.includes(user.id);
+      setSelectedAnnotation({
+        ...updatedAnnotation,
+        upvotes: hasUpvoted ? updatedAnnotation.upvotes - 1 : updatedAnnotation.upvotes + 1,
+        hasUserUpvoted: !hasUpvoted
+      });
     }
-  }, [center.lat, center.lng, zoom]);
+
+    // Refresh the text annotations to update sizes
+    setTimeout(() => {
+      updateTextAnnotations();
+    }, 100);
+  };
 
   // Create granular heatmap overlay with much smaller grid
   const createHeatmapOverlay = (type: string, data: any[]) => {
@@ -328,6 +447,22 @@ const OpenStreetMap: React.FC<OpenStreetMapProps> = ({
     updateTextAnnotations();
   }, [markers]);
 
+  // Add CSS for clickable annotations
+  useEffect(() => {
+    const style = document.createElement('style');
+    style.textContent = `
+      .clickable-annotation:hover {
+        transform: scale(1.1);
+        transition: transform 0.2s ease;
+      }
+    `;
+    document.head.appendChild(style);
+
+    return () => {
+      document.head.removeChild(style);
+    };
+  }, []);
+
   if (error) {
     return (
       <div className="w-full h-full flex items-center justify-center bg-gray-100 rounded-lg">
@@ -363,6 +498,13 @@ const OpenStreetMap: React.FC<OpenStreetMapProps> = ({
           </div>
         </div>
       )}
+      
+      <AnnotationModal
+        isOpen={showAnnotationModal}
+        onClose={() => setShowAnnotationModal(false)}
+        annotation={selectedAnnotation}
+        onUpvote={handleUpvote}
+      />
     </div>
   );
 };
